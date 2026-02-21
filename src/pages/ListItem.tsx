@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Upload, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,59 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const ListItem = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [deposit, setDeposit] = useState("");
+  const [location, setLocation] = useState("");
+  const [condition, setCondition] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">You need to sign in to list an item.</p>
+            <Link to="/auth"><Button>Sign In</Button></Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Item listed!", description: "Your item has been submitted for review." });
-    navigate("/");
+    setLoading(true);
+
+    const { error } = await supabase.from("listings").insert({
+      user_id: user.id,
+      title,
+      description,
+      category,
+      price: category === "donate" ? 0 : Number(price),
+      security_deposit: category === "rent" ? Number(deposit) : 0,
+      location,
+      condition: condition || "good",
+    });
+
+    setLoading(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Item listed!", description: "Your item has been published." });
+      navigate("/");
+    }
   };
 
   return (
@@ -38,7 +80,7 @@ const ListItem = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label>Title</Label>
-              <Input placeholder="e.g. Canon EOS R5 Camera" required />
+              <Input placeholder="e.g. Canon EOS R5 Camera" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
 
             <div className="space-y-2">
@@ -56,22 +98,22 @@ const ListItem = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Price {category === "donate" && "(N/A)"}</Label>
-                <Input type="number" placeholder="₹0" disabled={category === "donate"} />
+                <Input type="number" placeholder="₹0" disabled={category === "donate"} value={price} onChange={(e) => setPrice(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Security Deposit</Label>
-                <Input type="number" placeholder="₹0" disabled={category !== "rent"} />
+                <Input type="number" placeholder="₹0" disabled={category !== "rent"} value={deposit} onChange={(e) => setDeposit(e.target.value)} />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Location</Label>
-              <Input placeholder="e.g. Mumbai, MH" required />
+              <Input placeholder="e.g. Mumbai, MH" value={location} onChange={(e) => setLocation(e.target.value)} required />
             </div>
 
             <div className="space-y-2">
               <Label>Condition</Label>
-              <Select>
+              <Select value={condition} onValueChange={setCondition}>
                 <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">New</SelectItem>
@@ -85,20 +127,19 @@ const ListItem = () => {
 
             <div className="space-y-2">
               <Label>Description</Label>
-              <Textarea placeholder="Describe your item..." rows={4} required />
+              <Textarea placeholder="Describe your item..." rows={4} value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
 
             <div className="space-y-2">
               <Label>Photos</Label>
               <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
                 <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Click to upload or drag & drop</p>
-                <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB each</p>
+                <p className="text-sm text-muted-foreground">Photo upload coming soon</p>
               </div>
             </div>
 
-            <Button type="submit" size="lg" className="w-full">
-              Publish Listing
+            <Button type="submit" size="lg" className="w-full" disabled={loading || !category}>
+              {loading ? "Publishing..." : "Publish Listing"}
             </Button>
           </form>
         </motion.div>

@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
-import { Search, MapPin, SlidersHorizontal, TrendingUp, ArrowUpDown } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ItemCard from "@/components/ItemCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { MOCK_ITEMS, type ItemCategory } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
 
-const CATEGORIES: { value: ItemCategory | "all"; label: string }[] = [
+type ListingCategory = "rent" | "sale" | "donate";
+
+const CATEGORIES: { value: ListingCategory | "all"; label: string }[] = [
   { value: "all", label: "All Items" },
   { value: "rent", label: "For Rent" },
   { value: "sale", label: "For Sale" },
@@ -18,24 +21,36 @@ const CATEGORIES: { value: ItemCategory | "all"; label: string }[] = [
 
 const Index = () => {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<ItemCategory | "all">("all");
+  const [category, setCategory] = useState<ListingCategory | "all">("all");
   const [location, setLocation] = useState("");
   const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest">("popular");
 
+  const { data: listings = [], isLoading } = useQuery({
+    queryKey: ["listings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("status", "active");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const filtered = useMemo(() => {
-    let items = [...MOCK_ITEMS];
+    let items = [...listings];
     if (category !== "all") items = items.filter((i) => i.category === category);
     if (search) items = items.filter((i) => i.title.toLowerCase().includes(search.toLowerCase()));
-    if (location) items = items.filter((i) => i.location.toLowerCase().includes(location.toLowerCase()));
+    if (location) items = items.filter((i) => i.location?.toLowerCase().includes(location.toLowerCase()));
 
     switch (sortBy) {
-      case "popular": items.sort((a, b) => b.popularity - a.popularity); break;
-      case "price-asc": items.sort((a, b) => a.price - b.price); break;
-      case "price-desc": items.sort((a, b) => b.price - a.price); break;
-      case "newest": items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); break;
+      case "popular": items.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)); break;
+      case "price-asc": items.sort((a, b) => (a.price ?? 0) - (b.price ?? 0)); break;
+      case "price-desc": items.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)); break;
+      case "newest": items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); break;
     }
     return items;
-  }, [category, search, location, sortBy]);
+  }, [listings, category, search, location, sortBy]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -61,7 +76,6 @@ const Index = () => {
             A trusted marketplace connecting people. List anything — from electronics to furniture — with escrow protection and verified users.
           </motion.p>
 
-          {/* Search Bar */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -70,21 +84,11 @@ const Index = () => {
           >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search items..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <div className="relative flex-1 sm:max-w-[200px]">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="pl-9" />
             </div>
           </motion.div>
         </div>
@@ -92,17 +96,10 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container flex-1 py-8">
-        {/* Filters Row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex gap-2 flex-wrap">
             {CATEGORIES.map((cat) => (
-              <Button
-                key={cat.value}
-                variant={category === cat.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCategory(cat.value)}
-                className="text-xs"
-              >
+              <Button key={cat.value} variant={category === cat.value ? "default" : "outline"} size="sm" onClick={() => setCategory(cat.value)} className="text-xs">
                 {cat.label}
               </Button>
             ))}
@@ -121,27 +118,24 @@ const Index = () => {
           </Select>
         </div>
 
-        {/* Results */}
-        <p className="text-sm text-muted-foreground mb-4">{filtered.length} items found</p>
-
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-20 text-muted-foreground">Loading listings...</div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <SlidersHorizontal className="h-10 w-10 mx-auto mb-4 opacity-40" />
-            <p>No items match your filters. Try adjusting your search.</p>
+            <p>No items yet. Be the first to list something!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((item, i) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-              >
-                <ItemCard item={item} />
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground mb-4">{filtered.length} items found</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {filtered.map((item, i) => (
+                <motion.div key={item.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
+                  <ItemCard item={item} />
+                </motion.div>
+              ))}
+            </div>
+          </>
         )}
       </main>
 
