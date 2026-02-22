@@ -23,7 +23,7 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ListingCategory | "all">("all");
   const [location, setLocation] = useState("");
-  const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest">("popular");
+  const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest" | "nearest">("popular");
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["listings"],
@@ -48,6 +48,16 @@ const Index = () => {
       case "price-asc": items.sort((a, b) => (a.price ?? 0) - (b.price ?? 0)); break;
       case "price-desc": items.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)); break;
       case "newest": items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); break;
+      case "nearest":
+        if (location) {
+          const loc = location.toLowerCase();
+          items.sort((a, b) => {
+            const aMatch = a.location?.toLowerCase().includes(loc) ? 0 : 1;
+            const bMatch = b.location?.toLowerCase().includes(loc) ? 0 : 1;
+            return aMatch - bMatch;
+          });
+        }
+        break;
     }
     return items;
   }, [listings, category, search, location, sortBy]);
@@ -114,6 +124,7 @@ const Index = () => {
               <SelectItem value="price-asc">Price: Low → High</SelectItem>
               <SelectItem value="price-desc">Price: High → Low</SelectItem>
               <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="nearest">Nearest Location</SelectItem>
             </SelectContent>
           </Select>
         </div>

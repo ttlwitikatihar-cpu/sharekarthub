@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -7,10 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const ItemDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["listing", id],
@@ -75,11 +80,22 @@ const ItemDetail = () => {
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl overflow-hidden bg-muted aspect-[4/3]">
-            {item.images && item.images[0] ? (
-              <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-muted-foreground">No image</div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+            <div className="rounded-xl overflow-hidden bg-muted aspect-[4/3]">
+              {item.images && item.images[0] ? (
+                <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-muted-foreground">No image</div>
+              )}
+            </div>
+            {item.images && item.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {item.images.slice(1).map((img: string, i: number) => (
+                  <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted">
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
             )}
           </motion.div>
 
@@ -138,10 +154,45 @@ const ItemDetail = () => {
             )}
 
             <div className="flex gap-3 pt-2">
-              <Button className="flex-1 gap-2" size="lg">
+              <Button className="flex-1 gap-2" size="lg" onClick={async () => {
+                if (!user) { navigate("/auth"); return; }
+                const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+                const { error } = await supabase.from("orders").insert({
+                  listing_id: item.id,
+                  buyer_id: user.id,
+                  seller_id: item.user_id,
+                  handover_otp: generateOTP(),
+                  return_otp: item.category === "rent" ? generateOTP() : null,
+                });
+                if (error) {
+                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                } else {
+                  toast({ title: "Order placed!", description: "Check your orders for OTP verification." });
+                  navigate("/orders");
+                }
+              }}>
                 {item.category === "rent" ? "Request to Rent" : item.category === "sale" ? "Buy Now" : "Request Item"}
               </Button>
-              <Button variant="outline" size="lg" className="gap-2">
+              <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
+                if (!user) { navigate("/auth"); return; }
+                // Find or create conversation
+                const { data: existing } = await supabase
+                  .from("conversations")
+                  .select("id")
+                  .eq("listing_id", item.id)
+                  .eq("buyer_id", user.id)
+                  .maybeSingle();
+                if (existing) {
+                  navigate("/chat");
+                } else {
+                  await supabase.from("conversations").insert({
+                    listing_id: item.id,
+                    buyer_id: user.id,
+                    seller_id: item.user_id,
+                  });
+                  navigate("/chat");
+                }
+              }}>
                 <MessageCircle className="h-4 w-4" /> Chat
               </Button>
               <Button variant="ghost" size="icon"><Heart className="h-5 w-5" /></Button>
