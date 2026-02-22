@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
 import ListItem from "./pages/ListItem";
 import Leaderboard from "./pages/Leaderboard";
+import Chat from "./pages/Chat";
+import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +27,8 @@ const App = () => (
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/list-item" element={<ListItem />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/orders" element={<Orders />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

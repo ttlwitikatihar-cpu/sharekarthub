@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X, Bell, User, Plus, LogOut } from "lucide-react";
+import { Menu, X, Bell, User, Plus, LogOut, MessageCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -13,6 +13,8 @@ import {
 const NAV_LINKS = [
   { label: "Browse", href: "/" },
   { label: "Leaderboard", href: "/leaderboard" },
+  { label: "Messages", href: "/chat" },
+  { label: "Orders", href: "/orders" },
 ];
 
 const Navbar = () => {
