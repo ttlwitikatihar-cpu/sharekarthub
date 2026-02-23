@@ -60,6 +60,7 @@ export type Database = {
           location: string | null
           popularity: number | null
           price: number | null
+          quantity: number
           security_deposit: number | null
           status: string
           title: string
@@ -76,6 +77,7 @@ export type Database = {
           location?: string | null
           popularity?: number | null
           price?: number | null
+          quantity?: number
           security_deposit?: number | null
           status?: string
           title: string
@@ -92,6 +94,7 @@ export type Database = {
           location?: string | null
           popularity?: number | null
           price?: number | null
+          quantity?: number
           security_deposit?: number | null
           status?: string
           title?: string

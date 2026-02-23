@@ -14,6 +14,7 @@ const categoryConfig: Record<string, { label: string; variant: "default" | "seco
 const ItemCard = ({ item }: { item: Listing }) => {
   const cat = categoryConfig[item.category] || categoryConfig.sale;
   const CatIcon = cat.icon;
+  const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
 
   return (
     <Link
@@ -26,11 +27,14 @@ const ItemCard = ({ item }: { item: Listing }) => {
         ) : (
           <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No image</div>
         )}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 flex gap-1.5">
           <Badge variant={cat.variant} className="gap-1 text-xs font-semibold shadow-sm">
             <CatIcon className="h-3 w-3" />
             {cat.label}
           </Badge>
+          {outOfStock && (
+            <Badge variant="destructive" className="text-xs font-semibold shadow-sm">Out of Stock</Badge>
+          )}
         </div>
       </div>
 
