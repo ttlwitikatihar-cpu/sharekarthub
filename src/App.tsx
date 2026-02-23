@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
 import ListItem from "./pages/ListItem";
+import EditListing from "./pages/EditListing";
 import Leaderboard from "./pages/Leaderboard";
 import Chat from "./pages/Chat";
 import Orders from "./pages/Orders";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/list-item" element={<ListItem />} />
+            <Route path="/edit-listing/:id" element={<EditListing />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/orders" element={<Orders />} />

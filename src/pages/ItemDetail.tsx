@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,8 @@ const ItemDetail = () => {
   const categoryLabels: Record<string, string> = { rent: "For Rent", sale: "For Sale", donate: "Free / Donate" };
   const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; kyc_status: string } | null;
   const verified = profile?.kyc_status === "verified";
+  const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
+  const isOwner = user?.id === item.user_id;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -102,6 +104,7 @@ const ItemDetail = () => {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-5">
             <div>
               <Badge variant="secondary" className="mb-2">{categoryLabels[item.category] || item.category}</Badge>
+              {outOfStock && <Badge variant="destructive" className="mb-2 ml-2">Out of Stock</Badge>}
               <h1 className="text-2xl md:text-3xl font-bold">{item.title}</h1>
             </div>
 
@@ -153,48 +156,56 @@ const ItemDetail = () => {
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
-              <Button className="flex-1 gap-2" size="lg" onClick={async () => {
-                if (!user) { navigate("/auth"); return; }
-                const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
-                const { error } = await supabase.from("orders").insert({
-                  listing_id: item.id,
-                  buyer_id: user.id,
-                  seller_id: item.user_id,
-                  handover_otp: generateOTP(),
-                  return_otp: item.category === "rent" ? generateOTP() : null,
-                });
-                if (error) {
-                  toast({ title: "Error", description: error.message, variant: "destructive" });
-                } else {
-                  toast({ title: "Order placed!", description: "Check your orders for OTP verification." });
-                  navigate("/orders");
-                }
-              }}>
-                {item.category === "rent" ? "Request to Rent" : item.category === "sale" ? "Buy Now" : "Request Item"}
-              </Button>
-              <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
-                if (!user) { navigate("/auth"); return; }
-                // Find or create conversation
-                const { data: existing } = await supabase
-                  .from("conversations")
-                  .select("id")
-                  .eq("listing_id", item.id)
-                  .eq("buyer_id", user.id)
-                  .maybeSingle();
-                if (existing) {
-                  navigate("/chat");
-                } else {
-                  await supabase.from("conversations").insert({
-                    listing_id: item.id,
-                    buyer_id: user.id,
-                    seller_id: item.user_id,
-                  });
-                  navigate("/chat");
-                }
-              }}>
-                <MessageCircle className="h-4 w-4" /> Chat
-              </Button>
+            <div className="flex gap-3 pt-2 flex-wrap">
+              {isOwner && (
+                <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate(`/edit-listing/${item.id}`)}>
+                  <Pencil className="h-4 w-4" /> Edit Listing
+                </Button>
+              )}
+              {!isOwner && (
+                <>
+                  <Button className="flex-1 gap-2" size="lg" disabled={outOfStock} onClick={async () => {
+                    if (!user) { navigate("/auth"); return; }
+                    const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+                    const { error } = await supabase.from("orders").insert({
+                      listing_id: item.id,
+                      buyer_id: user.id,
+                      seller_id: item.user_id,
+                      handover_otp: generateOTP(),
+                      return_otp: item.category === "rent" ? generateOTP() : null,
+                    });
+                    if (error) {
+                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Order placed!", description: "Check your orders for OTP verification." });
+                      navigate("/orders");
+                    }
+                  }}>
+                    {outOfStock ? "Out of Stock" : item.category === "rent" ? "Request to Rent" : item.category === "sale" ? "Buy Now" : "Request Item"}
+                  </Button>
+                  <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
+                    if (!user) { navigate("/auth"); return; }
+                    const { data: existing } = await supabase
+                      .from("conversations")
+                      .select("id")
+                      .eq("listing_id", item.id)
+                      .eq("buyer_id", user.id)
+                      .maybeSingle();
+                    if (existing) {
+                      navigate("/chat");
+                    } else {
+                      await supabase.from("conversations").insert({
+                        listing_id: item.id,
+                        buyer_id: user.id,
+                        seller_id: item.user_id,
+                      });
+                      navigate("/chat");
+                    }
+                  }}>
+                    <MessageCircle className="h-4 w-4" /> Chat
+                  </Button>
+                </>
+              )}
               <Button variant="ghost" size="icon"><Heart className="h-5 w-5" /></Button>
               <Button variant="ghost" size="icon"><Share2 className="h-5 w-5" /></Button>
             </div>
