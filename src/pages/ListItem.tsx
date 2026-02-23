@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Upload, ArrowLeft, X, ImagePlus } from "lucide-react";
+import { Upload, ArrowLeft, X, ImagePlus, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useGeolocation } from "@/hooks/use-geolocation";
 
 const ListItem = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ const ListItem = () => {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { position, loading: geoLoading, requestLocation } = useGeolocation();
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -94,7 +96,9 @@ const ListItem = () => {
         condition: condition || "good",
         quantity: Number(quantity) || 1,
         images,
-      });
+        latitude: position?.latitude ?? null,
+        longitude: position?.longitude ?? null,
+      } as any);
 
       if (error) throw error;
       toast({ title: "Item listed!", description: "Your item has been published." });
@@ -149,7 +153,15 @@ const ListItem = () => {
 
             <div className="space-y-2">
               <Label>Location</Label>
-              <Input placeholder="e.g. Mumbai, MH" value={location} onChange={(e) => setLocation(e.target.value)} required />
+              <div className="flex gap-2">
+                <Input placeholder="e.g. Mumbai, MH" value={location} onChange={(e) => setLocation(e.target.value)} required className="flex-1" />
+                <Button type="button" variant="outline" size="icon" onClick={requestLocation} disabled={geoLoading} title="Use my live location">
+                  <Navigation className={`h-4 w-4 ${position ? "text-primary" : "text-muted-foreground"}`} />
+                </Button>
+              </div>
+              {position && (
+                <p className="text-xs text-muted-foreground">📍 GPS coordinates captured ({position.latitude.toFixed(4)}, {position.longitude.toFixed(4)})</p>
+              )}
             </div>
 
             <div className="space-y-2">

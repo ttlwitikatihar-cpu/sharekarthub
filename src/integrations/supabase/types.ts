@@ -57,7 +57,9 @@ export type Database = {
           description: string | null
           id: string
           images: string[] | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           popularity: number | null
           price: number | null
           quantity: number
@@ -74,7 +76,9 @@ export type Database = {
           description?: string | null
           id?: string
           images?: string[] | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           popularity?: number | null
           price?: number | null
           quantity?: number
@@ -91,7 +95,9 @@ export type Database = {
           description?: string | null
           id?: string
           images?: string[] | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           popularity?: number | null
           price?: number | null
           quantity?: number
@@ -190,49 +196,73 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
           bio: string | null
+          city: string | null
           created_at: string
           donations_count: number | null
           full_name: string
           id: string
+          id_number: string | null
+          id_type: string | null
+          kyc_document_url: string | null
           kyc_status: string
+          kyc_submitted_at: string | null
           location: string | null
           phone: string | null
+          pincode: string | null
           rating: number | null
           reward_points: number | null
+          state: string | null
           total_reviews: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           created_at?: string
           donations_count?: number | null
           full_name?: string
           id?: string
+          id_number?: string | null
+          id_type?: string | null
+          kyc_document_url?: string | null
           kyc_status?: string
+          kyc_submitted_at?: string | null
           location?: string | null
           phone?: string | null
+          pincode?: string | null
           rating?: number | null
           reward_points?: number | null
+          state?: string | null
           total_reviews?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
           created_at?: string
           donations_count?: number | null
           full_name?: string
           id?: string
+          id_number?: string | null
+          id_type?: string | null
+          kyc_document_url?: string | null
           kyc_status?: string
+          kyc_submitted_at?: string | null
           location?: string | null
           phone?: string | null
+          pincode?: string | null
           rating?: number | null
           reward_points?: number | null
+          state?: string | null
           total_reviews?: number | null
           updated_at?: string
           user_id?: string

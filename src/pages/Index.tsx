@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, MapPin, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, ArrowUpDown, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import ItemCard from "@/components/ItemCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 
 type ListingCategory = "rent" | "sale" | "donate";
 
@@ -24,7 +25,7 @@ const Index = () => {
   const [category, setCategory] = useState<ListingCategory | "all">("all");
   const [location, setLocation] = useState("");
   const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest" | "nearest">("popular");
-
+  const { position, loading: geoLoading, requestLocation } = useGeolocation();
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["listings"],
     queryFn: async () => {
@@ -49,7 +50,19 @@ const Index = () => {
       case "price-desc": items.sort((a, b) => (b.price ?? 0) - (a.price ?? 0)); break;
       case "newest": items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); break;
       case "nearest":
-        if (location) {
+        if (position) {
+          items.sort((a, b) => {
+            const aLat = (a as any).latitude;
+            const aLng = (a as any).longitude;
+            const bLat = (b as any).latitude;
+            const bLng = (b as any).longitude;
+            if (aLat == null || aLng == null) return 1;
+            if (bLat == null || bLng == null) return -1;
+            const aDist = getDistance(position.latitude, position.longitude, aLat, aLng);
+            const bDist = getDistance(position.latitude, position.longitude, bLat, bLng);
+            return aDist - bDist;
+          });
+        } else if (location) {
           const loc = location.toLowerCase();
           items.sort((a, b) => {
             const aMatch = a.location?.toLowerCase().includes(loc) ? 0 : 1;
@@ -60,7 +73,7 @@ const Index = () => {
         break;
     }
     return items;
-  }, [listings, category, search, location, sortBy]);
+  }, [listings, category, search, location, sortBy, position]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -100,6 +113,16 @@ const Index = () => {
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="pl-9" />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => { requestLocation(); setSortBy("nearest"); }}
+              disabled={geoLoading}
+              title="Use my live location"
+            >
+              <Navigation className={`h-4 w-4 ${position ? "text-primary" : "text-muted-foreground"}`} />
+            </Button>
           </motion.div>
         </div>
       </section>
