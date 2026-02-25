@@ -232,7 +232,7 @@ const EditListing = () => {
 
             <div className="space-y-2">
               <Label>Photos (up to 5)</Label>
-              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+              <input ref={fileInputRef} type="file" accept="image/*" multiple capture="environment" className="hidden" onChange={handleImageSelect} />
               {(existingImages.length > 0 || newImagePreviews.length > 0) && (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-2">
                   {existingImages.map((src, i) => (

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ShieldCheck, Package } from "lucide-react";
+import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const OTP_EXPIRY_HOURS = 48; // 2 days
+
+const isOtpExpired = (createdAt: string) => {
+  const created = new Date(createdAt).getTime();
+  const now = Date.now();
+  return now - created > OTP_EXPIRY_HOURS * 60 * 60 * 1000;
+};
+
+const getTimeRemaining = (createdAt: string) => {
+  const expiresAt = new Date(createdAt).getTime() + OTP_EXPIRY_HOURS * 60 * 60 * 1000;
+  const remaining = expiresAt - Date.now();
+  if (remaining <= 0) return "Expired";
+  const hours = Math.floor(remaining / (1000 * 60 * 60));
+  const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  return `${hours}h ${mins}m remaining`;
+};
 
 const Orders = () => {
   const { user } = useAuth();
@@ -44,8 +59,22 @@ const Orders = () => {
     enabled: !!user,
   });
 
+  const cancelOrder = async (orderId: string) => {
+    const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Order cancelled", description: "The pending request has been cancelled." });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    }
+  };
+
   const verifyHandoverOTP = async (orderId: string) => {
     const order = orders.find((o: any) => o.id === orderId);
+    if (isOtpExpired(order?.created_at)) {
+      toast({ title: "OTP Expired", description: "This order has expired. Please cancel and create a new one.", variant: "destructive" });
+      return;
+    }
     const input = otpInputs[`handover-${orderId}`];
     if (input === order?.handover_otp) {
       await supabase.from("orders").update({ handover_confirmed: true, status: "active" }).eq("id", orderId);
@@ -87,6 +116,7 @@ const Orders = () => {
     pending: "bg-warning/10 text-warning",
     active: "bg-primary/10 text-primary",
     completed: "bg-success/10 text-success",
+    cancelled: "bg-destructive/10 text-destructive",
   };
 
   return (
@@ -111,6 +141,7 @@ const Orders = () => {
               const isBuyer = order.buyer_id === user.id;
               const isSeller = order.seller_id === user.id;
               const isRental = order.listing?.category === "rent";
+              const expired = order.status === "pending" && isOtpExpired(order.created_at);
 
               return (
                 <motion.div
@@ -121,13 +152,32 @@ const Orders = () => {
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{order.listing?.title || "Item"}</h3>
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor[order.status] || ""}`}>
-                      {order.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {expired && <Badge variant="destructive" className="text-xs">Expired</Badge>}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor[order.status] || ""}`}>
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
 
+                  {/* OTP Expiry Timer */}
+                  {order.status === "pending" && !expired && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>OTP valid for: {getTimeRemaining(order.created_at)}</span>
+                    </div>
+                  )}
+
+                  {/* Expired notice */}
+                  {expired && order.status === "pending" && (
+                    <div className="bg-destructive/5 rounded-lg p-3 flex items-center gap-2 text-sm text-destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      OTP has expired. Please cancel this order and create a new one.
+                    </div>
+                  )}
+
                   {/* Handover OTP */}
-                  {order.status === "pending" && (
+                  {order.status === "pending" && !expired && (
                     <div className="bg-muted rounded-lg p-3 space-y-2">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         <ShieldCheck className="h-4 w-4 text-primary" />
@@ -191,6 +241,26 @@ const Orders = () => {
                   {order.status === "completed" && (
                     <div className="flex items-center gap-1 text-sm text-primary">
                       <CheckCircle className="h-4 w-4" /> Order completed
+                    </div>
+                  )}
+
+                  {order.status === "cancelled" && (
+                    <div className="flex items-center gap-1 text-sm text-destructive">
+                      <AlertTriangle className="h-4 w-4" /> Order cancelled
+                    </div>
+                  )}
+
+                  {/* Cancel button for pending orders */}
+                  {order.status === "pending" && (isBuyer || isSeller) && (
+                    <div className="pt-1">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => cancelOrder(order.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Cancel Order
+                      </Button>
                     </div>
                   )}
                 </motion.div>
