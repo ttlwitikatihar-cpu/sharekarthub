@@ -195,7 +195,7 @@ const ListItem = () => {
                 type="file"
                 accept="image/*"
                 multiple
-                capture={undefined}
+                capture="environment"
                 className="hidden"
                 onChange={handleImageSelect}
               />

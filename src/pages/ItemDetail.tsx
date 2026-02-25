@@ -166,6 +166,10 @@ const ItemDetail = () => {
                 <>
                   <Button className="flex-1 gap-2" size="lg" disabled={outOfStock} onClick={async () => {
                     if (!user) { navigate("/auth"); return; }
+                    if (outOfStock) {
+                      toast({ title: "Out of Stock", description: "This item is currently unavailable.", variant: "destructive" });
+                      return;
+                    }
                     const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
                     const { error } = await supabase.from("orders").insert({
                       listing_id: item.id,
@@ -175,7 +179,8 @@ const ItemDetail = () => {
                       return_otp: item.category === "rent" ? generateOTP() : null,
                     });
                     if (error) {
-                      toast({ title: "Error", description: error.message, variant: "destructive" });
+                      const msg = error.message.includes("out of stock") ? "This item is out of stock." : error.message;
+                      toast({ title: "Cannot place order", description: msg, variant: "destructive" });
                     } else {
                       toast({ title: "Order placed!", description: "Check your orders for OTP verification." });
                       navigate("/orders");
