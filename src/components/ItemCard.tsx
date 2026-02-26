@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, IndianRupee, Gift } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, IndianRupee, Gift, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -9,9 +9,15 @@ const categoryConfig: Record<string, { label: string; variant: "default" | "seco
   rent: { label: "For Rent", variant: "default", icon: Clock },
   sale: { label: "For Sale", variant: "secondary", icon: IndianRupee },
   donate: { label: "Free", variant: "outline", icon: Gift },
+  service: { label: "Service", variant: "secondary", icon: Wrench },
 };
 
-const ItemCard = ({ item }: { item: Listing }) => {
+interface ItemCardProps {
+  item: Listing;
+  distanceKm?: number | null;
+}
+
+const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
   const cat = categoryConfig[item.category] || categoryConfig.sale;
   const CatIcon = cat.icon;
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
@@ -40,9 +46,13 @@ const ItemCard = ({ item }: { item: Listing }) => {
 
       <div className="p-4 space-y-2">
         <h3 className="font-semibold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
-        {item.location && (
+        {(item.location || distanceKm != null) && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />{item.location}
+            <MapPin className="h-3 w-3" />
+            {item.location}
+            {distanceKm != null && (
+              <span className="ml-auto font-medium text-primary">{distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)} km`}</span>
+            )}
           </div>
         )}
         <div className="flex items-center justify-between pt-1">

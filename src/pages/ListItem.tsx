@@ -136,6 +136,7 @@ const ListItem = () => {
                   <SelectItem value="rent">For Rent</SelectItem>
                   <SelectItem value="sale">For Sale</SelectItem>
                   <SelectItem value="donate">Donate (Free)</SelectItem>
+                  <SelectItem value="service">Service</SelectItem>
                 </SelectContent>
               </Select>
             </div>

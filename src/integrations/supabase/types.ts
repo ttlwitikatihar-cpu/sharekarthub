@@ -193,6 +193,7 @@ export type Database = {
           handover_otp: string | null
           id: string
           listing_id: string
+          quantity: number
           return_confirmed: boolean
           return_otp: string | null
           seller_id: string
@@ -206,6 +207,7 @@ export type Database = {
           handover_otp?: string | null
           id?: string
           listing_id: string
+          quantity?: number
           return_confirmed?: boolean
           return_otp?: string | null
           seller_id: string
@@ -219,6 +221,7 @@ export type Database = {
           handover_otp?: string | null
           id?: string
           listing_id?: string
+          quantity?: number
           return_confirmed?: boolean
           return_otp?: string | null
           seller_id?: string
