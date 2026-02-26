@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +18,7 @@ const ItemDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [orderQty, setOrderQty] = useState(1);
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["listing", id],
@@ -67,10 +70,11 @@ const ItemDetail = () => {
     );
   }
 
-  const categoryLabels: Record<string, string> = { rent: "For Rent", sale: "For Sale", donate: "Free / Donate" };
+  const categoryLabels: Record<string, string> = { rent: "For Rent", sale: "For Sale", donate: "Free / Donate", service: "Service" };
   const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; kyc_status: string } | null;
   const verified = profile?.kyc_status === "verified";
-  const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
+  const availableQty = item.quantity ?? 0;
+  const outOfStock = item.status === "out_of_stock" || availableQty <= 0;
   const isOwner = user?.id === item.user_id;
 
   return (
@@ -156,6 +160,30 @@ const ItemDetail = () => {
               </div>
             )}
 
+            {/* Quantity Selector */}
+            {!isOwner && !outOfStock && availableQty > 1 && item.category !== "service" && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Quantity:</span>
+                <div className="flex items-center gap-1 border border-border rounded-lg">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOrderQty(Math.max(1, orderQty - 1))} disabled={orderQty <= 1}>
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={availableQty}
+                    value={orderQty}
+                    onChange={(e) => setOrderQty(Math.min(availableQty, Math.max(1, Number(e.target.value) || 1)))}
+                    className="w-14 text-center border-0 h-8 p-0"
+                  />
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOrderQty(Math.min(availableQty, orderQty + 1))} disabled={orderQty >= availableQty}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <span className="text-xs text-muted-foreground">({availableQty} available)</span>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2 flex-wrap">
               {isOwner && (
                 <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate(`/edit-listing/${item.id}`)}>
@@ -175,18 +203,19 @@ const ItemDetail = () => {
                       listing_id: item.id,
                       buyer_id: user.id,
                       seller_id: item.user_id,
+                      quantity: orderQty,
                       handover_otp: generateOTP(),
                       return_otp: item.category === "rent" ? generateOTP() : null,
-                    });
+                    } as any);
                     if (error) {
-                      const msg = error.message.includes("out of stock") ? "This item is out of stock." : error.message;
+                      const msg = error.message.includes("stock") ? "Not enough stock available." : error.message;
                       toast({ title: "Cannot place order", description: msg, variant: "destructive" });
                     } else {
-                      toast({ title: "Order placed!", description: "Check your orders for OTP verification." });
+                      toast({ title: "Order placed!", description: `${orderQty} item(s) ordered. Check your orders for OTP verification.` });
                       navigate("/orders");
                     }
                   }}>
-                    {outOfStock ? "Out of Stock" : item.category === "rent" ? "Request to Rent" : item.category === "sale" ? "Buy Now" : "Request Item"}
+                    {outOfStock ? "Out of Stock" : item.category === "rent" ? "Request to Rent" : item.category === "sale" ? "Buy Now" : item.category === "service" ? "Book Service" : "Request Item"}
                   </Button>
                   <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
                     if (!user) { navigate("/auth"); return; }

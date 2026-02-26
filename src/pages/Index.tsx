@@ -11,13 +11,14 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 
-type ListingCategory = "rent" | "sale" | "donate";
+type ListingCategory = "rent" | "sale" | "donate" | "service";
 
 const CATEGORIES: { value: ListingCategory | "all"; label: string }[] = [
   { value: "all", label: "All Items" },
   { value: "rent", label: "For Rent" },
   { value: "sale", label: "For Sale" },
   { value: "donate", label: "Free / Donate" },
+  { value: "service", label: "Services" },
 ];
 
 const Index = () => {
@@ -163,11 +164,18 @@ const Index = () => {
           <>
             <p className="text-sm text-muted-foreground mb-4">{filtered.length} items found</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filtered.map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
-                  <ItemCard item={item} />
-                </motion.div>
-              ))}
+              {filtered.map((item, i) => {
+                const aLat = (item as any).latitude;
+                const aLng = (item as any).longitude;
+                const dist = position && aLat != null && aLng != null
+                  ? getDistance(position.latitude, position.longitude, aLat, aLng)
+                  : null;
+                return (
+                  <motion.div key={item.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
+                    <ItemCard item={item} distanceKm={dist} />
+                  </motion.div>
+                );
+              })}
             </div>
           </>
         )}
