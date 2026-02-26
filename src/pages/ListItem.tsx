@@ -137,6 +137,7 @@ const ListItem = () => {
                   <SelectItem value="sale">For Sale</SelectItem>
                   <SelectItem value="donate">Donate (Free)</SelectItem>
                   <SelectItem value="service">Service</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,6 +200,7 @@ const ListItem = () => {
                 capture="environment"
                 className="hidden"
                 onChange={handleImageSelect}
+                onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
               />
               {imagePreviews.length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-2">

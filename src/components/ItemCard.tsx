@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, IndianRupee, Gift, Wrench } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, IndianRupee, Gift, Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -10,6 +10,7 @@ const categoryConfig: Record<string, { label: string; variant: "default" | "seco
   sale: { label: "For Sale", variant: "secondary", icon: IndianRupee },
   donate: { label: "Free", variant: "outline", icon: Gift },
   service: { label: "Service", variant: "secondary", icon: Wrench },
+  other: { label: "Other", variant: "outline", icon: Package },
 };
 
 interface ItemCardProps {
