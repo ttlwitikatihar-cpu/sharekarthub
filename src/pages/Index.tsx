@@ -11,7 +11,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 
-type ListingCategory = "rent" | "sale" | "donate" | "service";
+type ListingCategory = "rent" | "sale" | "donate" | "service" | "other";
 
 const CATEGORIES: { value: ListingCategory | "all"; label: string }[] = [
   { value: "all", label: "All Items" },
@@ -19,6 +19,7 @@ const CATEGORIES: { value: ListingCategory | "all"; label: string }[] = [
   { value: "sale", label: "For Sale" },
   { value: "donate", label: "Free / Donate" },
   { value: "service", label: "Services" },
+  { value: "other", label: "Other" },
 ];
 
 const Index = () => {

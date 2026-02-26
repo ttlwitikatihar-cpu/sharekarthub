@@ -185,6 +185,8 @@ const EditListing = () => {
                   <SelectItem value="rent">For Rent</SelectItem>
                   <SelectItem value="sale">For Sale</SelectItem>
                   <SelectItem value="donate">Donate (Free)</SelectItem>
+                  <SelectItem value="service">Service</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -232,7 +234,7 @@ const EditListing = () => {
 
             <div className="space-y-2">
               <Label>Photos (up to 5)</Label>
-              <input ref={fileInputRef} type="file" accept="image/*" multiple capture="environment" className="hidden" onChange={handleImageSelect} />
+              <input ref={fileInputRef} type="file" accept="image/*" multiple capture="environment" className="hidden" onChange={handleImageSelect} onClick={(e) => { (e.target as HTMLInputElement).value = ''; }} />
               {(existingImages.length > 0 || newImagePreviews.length > 0) && (
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-2">
                   {existingImages.map((src, i) => (

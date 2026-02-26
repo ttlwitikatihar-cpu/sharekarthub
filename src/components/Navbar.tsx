@@ -28,7 +28,7 @@ const Navbar = () => {
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-black">S</span>
-          <span className="hidden sm:inline">ShareHub</span>
+          <span className="hidden sm:inline">ShreKart</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">

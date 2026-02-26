@@ -67,14 +67,14 @@ const Auth = () => {
         className="w-full max-w-md"
       >
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back to ShareHub
+          <ArrowLeft className="h-4 w-4" /> Back to ShreKart
         </Link>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 font-bold text-xl mb-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-black">S</span>
-              ShareHub
+              ShreKart
             </div>
             <p className="text-sm text-muted-foreground">Join the community</p>
           </div>
