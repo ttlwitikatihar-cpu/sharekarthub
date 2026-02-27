@@ -10,7 +10,7 @@ const Footer = () => (
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-black">
               S
             </span>
-            ShreKart
+            ShareKart
           </Link>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Rent, sell, or donate — building community through sharing.
@@ -42,7 +42,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-8 pt-6 border-t border-border flex items-center justify-center gap-1 text-sm text-muted-foreground">
-        Made with <Heart className="h-3.5 w-3.5 text-destructive fill-destructive" /> by ShreKart
+        Made with <Heart className="h-3.5 w-3.5 text-destructive fill-destructive" /> by ShareKart
       </div>
     </div>
   </footer>

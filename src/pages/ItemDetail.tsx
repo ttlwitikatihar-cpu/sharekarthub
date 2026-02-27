@@ -38,8 +38,6 @@ const ItemDetail = () => {
         .single();
       
       return { ...data, profile };
-      if (error) throw error;
-      return data;
     },
     enabled: !!id,
   });
@@ -70,7 +68,7 @@ const ItemDetail = () => {
     );
   }
 
-  const categoryLabels: Record<string, string> = { rent: "For Rent", sale: "For Sale", donate: "Free / Donate", service: "Service" };
+  const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate" };
   const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; kyc_status: string } | null;
   const verified = profile?.kyc_status === "verified";
   const availableQty = item.quantity ?? 0;
@@ -215,7 +213,7 @@ const ItemDetail = () => {
                       navigate("/orders");
                     }
                   }}>
-                    {outOfStock ? "Out of Stock" : item.category === "rent" ? "Request to Rent" : item.category === "sale" ? "Buy Now" : item.category === "service" ? "Book Service" : "Request Item"}
+                    {outOfStock ? "Out of Stock" : item.category === "rent" ? "Request to Rent" : item.category === "sell" ? "Buy Now" : "Request Item"}
                   </Button>
                   <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
                     if (!user) { navigate("/auth"); return; }

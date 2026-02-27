@@ -11,15 +11,13 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 
-type ListingCategory = "rent" | "sale" | "donate" | "service" | "other";
+type ListingCategory = "rent" | "sell" | "donate";
 
 const CATEGORIES: { value: ListingCategory | "all"; label: string }[] = [
   { value: "all", label: "All Items" },
+  { value: "sell", label: "For Sale" },
   { value: "rent", label: "For Rent" },
-  { value: "sale", label: "For Sale" },
-  { value: "donate", label: "Free / Donate" },
-  { value: "service", label: "Services" },
-  { value: "other", label: "Other" },
+  { value: "donate", label: "Donate" },
 ];
 
 const Index = () => {
@@ -28,7 +26,7 @@ const Index = () => {
   const [location, setLocation] = useState("");
   const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest" | "nearest">("popular");
   const { position, loading: geoLoading, requestLocation } = useGeolocation();
-  const { data: listings = [], isLoading } = useQuery({
+  const { data: listings = [], isLoading, error } = useQuery({
     queryKey: ["listings"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,6 +36,8 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
+    retry: 2,
+    staleTime: 30000,
   });
 
   const filtered = useMemo(() => {
@@ -54,22 +54,15 @@ const Index = () => {
       case "nearest":
         if (position) {
           items.sort((a, b) => {
-            const aLat = (a as any).latitude;
-            const aLng = (a as any).longitude;
-            const bLat = (b as any).latitude;
-            const bLng = (b as any).longitude;
+            const aLat = a.latitude;
+            const aLng = a.longitude;
+            const bLat = b.latitude;
+            const bLng = b.longitude;
             if (aLat == null || aLng == null) return 1;
             if (bLat == null || bLng == null) return -1;
             const aDist = getDistance(position.latitude, position.longitude, aLat, aLng);
             const bDist = getDistance(position.latitude, position.longitude, bLat, bLng);
             return aDist - bDist;
-          });
-        } else if (location) {
-          const loc = location.toLowerCase();
-          items.sort((a, b) => {
-            const aMatch = a.location?.toLowerCase().includes(loc) ? 0 : 1;
-            const bMatch = b.location?.toLowerCase().includes(loc) ? 0 : 1;
-            return aMatch - bMatch;
           });
         }
         break;
@@ -98,7 +91,7 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="text-lg text-muted-foreground max-w-xl mx-auto"
           >
-            A trusted marketplace connecting people. List anything — from electronics to furniture — with escrow protection and verified users.
+            A trusted marketplace connecting people. List products or services — with escrow protection and verified users.
           </motion.p>
 
           <motion.div
@@ -156,6 +149,10 @@ const Index = () => {
 
         {isLoading ? (
           <div className="text-center py-20 text-muted-foreground">Loading listings...</div>
+        ) : error ? (
+          <div className="text-center py-20 text-muted-foreground">
+            <p>Unable to load listings. Please refresh the page.</p>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <SlidersHorizontal className="h-10 w-10 mx-auto mb-4 opacity-40" />
@@ -166,10 +163,8 @@ const Index = () => {
             <p className="text-sm text-muted-foreground mb-4">{filtered.length} items found</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filtered.map((item, i) => {
-                const aLat = (item as any).latitude;
-                const aLng = (item as any).longitude;
-                const dist = position && aLat != null && aLng != null
-                  ? getDistance(position.latitude, position.longitude, aLat, aLng)
+                const dist = position && item.latitude != null && item.longitude != null
+                  ? getDistance(position.latitude, position.longitude, item.latitude, item.longitude)
                   : null;
                 return (
                   <motion.div key={item.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}>

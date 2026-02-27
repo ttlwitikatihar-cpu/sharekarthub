@@ -21,6 +21,7 @@ const EditListing = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState("");
+  const [listingType, setListingType] = useState("product");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -48,6 +49,7 @@ const EditListing = () => {
       setTitle(listing.title);
       setDescription(listing.description || "");
       setCategory(listing.category);
+      setListingType((listing as any).listing_type || "product");
       setPrice(String(listing.price ?? ""));
       setDeposit(String(listing.security_deposit ?? ""));
       setLocation(listing.location || "");
@@ -138,6 +140,7 @@ const EditListing = () => {
         title,
         description,
         category,
+        listing_type: listingType,
         price: category === "donate" ? 0 : Number(price),
         security_deposit: category === "rent" ? Number(deposit) : 0,
         location,
@@ -145,7 +148,7 @@ const EditListing = () => {
         quantity: Number(quantity) || 1,
         images: allImages,
         status: Number(quantity) > 0 ? "active" : "out_of_stock",
-      }).eq("id", id!);
+      } as any).eq("id", id!);
 
       if (error) throw error;
       toast({ title: "Listing updated!" });
@@ -177,18 +180,28 @@ const EditListing = () => {
               <Input placeholder="e.g. Canon EOS R5 Camera" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
 
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rent">For Rent</SelectItem>
-                  <SelectItem value="sale">For Sale</SelectItem>
-                  <SelectItem value="donate">Donate (Free)</SelectItem>
-                  <SelectItem value="service">Service</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={category} onValueChange={setCategory} required>
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sell">Sell</SelectItem>
+                    <SelectItem value="rent">Rent</SelectItem>
+                    <SelectItem value="donate">Donate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={listingType} onValueChange={setListingType}>
+                  <SelectTrigger><SelectValue placeholder="Product or Service" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="product">Product</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -258,7 +271,7 @@ const EditListing = () => {
               {totalImages < 5 && (
                 <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
                   <ImagePlus className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">Click to add photos</p>
+                  <p className="text-sm text-muted-foreground">Click to capture photos</p>
                 </div>
               )}
             </div>
