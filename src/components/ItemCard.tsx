@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, IndianRupee, Gift, Wrench, Package } from "lucide-react";
+import { MapPin, Clock, IndianRupee, Gift, Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -7,10 +7,8 @@ type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
 const categoryConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline"; icon: typeof Clock }> = {
   rent: { label: "For Rent", variant: "default", icon: Clock },
-  sale: { label: "For Sale", variant: "secondary", icon: IndianRupee },
+  sell: { label: "For Sale", variant: "secondary", icon: IndianRupee },
   donate: { label: "Free", variant: "outline", icon: Gift },
-  service: { label: "Service", variant: "secondary", icon: Wrench },
-  other: { label: "Other", variant: "outline", icon: Package },
 };
 
 interface ItemCardProps {
@@ -19,9 +17,10 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
-  const cat = categoryConfig[item.category] || categoryConfig.sale;
+  const cat = categoryConfig[item.category] || categoryConfig.sell;
   const CatIcon = cat.icon;
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
+  const listingType = (item as any).listing_type as string | undefined;
 
   return (
     <Link
@@ -34,11 +33,16 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
         ) : (
           <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No image</div>
         )}
-        <div className="absolute top-3 left-3 flex gap-1.5">
+        <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
           <Badge variant={cat.variant} className="gap-1 text-xs font-semibold shadow-sm">
             <CatIcon className="h-3 w-3" />
             {cat.label}
           </Badge>
+          {listingType === "service" && (
+            <Badge variant="secondary" className="gap-1 text-xs font-semibold shadow-sm">
+              <Wrench className="h-3 w-3" /> Service
+            </Badge>
+          )}
           {outOfStock && (
             <Badge variant="destructive" className="text-xs font-semibold shadow-sm">Out of Stock</Badge>
           )}
