@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, Check, Clock, Package, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -26,6 +27,7 @@ const typeColors: Record<string, string> = {
 const NotificationBell = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const { data: notifications = [] } = useQuery({
@@ -109,7 +111,16 @@ const NotificationBell = () => {
               {notifications.map((n: any) => {
                 const Icon = typeIcons[n.type] || Bell;
                 return (
-                  <div key={n.id} className={`p-3 flex gap-3 ${!n.read ? "bg-muted/50" : ""}`}>
+                  <button
+                    key={n.id}
+                    className={`w-full text-left p-3 flex gap-3 hover:bg-muted/80 transition-colors cursor-pointer ${!n.read ? "bg-muted/50" : ""}`}
+                    onClick={() => {
+                      if (n.order_id) {
+                        setOpen(false);
+                        navigate("/orders");
+                      }
+                    }}
+                  >
                     <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${typeColors[n.type] || ""}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium leading-tight">{n.title}</p>
@@ -118,7 +129,7 @@ const NotificationBell = () => {
                         <Clock className="h-2.5 w-2.5" /> {timeAgo(n.created_at)}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>

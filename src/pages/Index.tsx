@@ -32,7 +32,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("listings")
         .select("*")
-        .eq("status", "active");
+        .in("status", ["active", "out_of_stock"]);
       if (error) throw error;
       return data;
     },
