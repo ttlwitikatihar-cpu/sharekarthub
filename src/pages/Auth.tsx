@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, User as UserIcon, ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -13,8 +13,17 @@ import { lovable } from "@/integrations/lovable/index";
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Reset loading on mount (handles Google OAuth redirect back)
+  useEffect(() => {
+    setLoginLoading(false);
+    setSignupLoading(false);
+    setGoogleLoading(false);
+  }, []);
 
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
@@ -27,12 +36,12 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLoginLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword,
     });
-    setLoading(false);
+    setLoginLoading(false);
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
     } else {
@@ -43,7 +52,7 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSignupLoading(true);
     const { error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
@@ -52,7 +61,7 @@ const Auth = () => {
         emailRedirectTo: window.location.origin,
       },
     });
-    setLoading(false);
+    setSignupLoading(false);
     if (error) {
       toast({ title: "Signup failed", description: error.message, variant: "destructive" });
     } else {
@@ -61,12 +70,13 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setGoogleLoading(true);
     const { error } = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
-    setLoading(false);
+    // Don't reset loading here - page will redirect
     if (error) {
+      setGoogleLoading(false);
       toast({ title: "Google sign-in failed", description: String(error), variant: "destructive" });
     }
   };
@@ -96,7 +106,7 @@ const Auth = () => {
             variant="outline"
             className="w-full gap-2 mb-4"
             onClick={handleGoogleSignIn}
-            disabled={loading}
+            disabled={googleLoading}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -137,8 +147,8 @@ const Auth = () => {
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Logging in..." : "Log In"}
+                <Button type="submit" className="w-full" disabled={loginLoading}>
+                  {loginLoading ? "Logging in..." : "Log In"}
                 </Button>
               </form>
             </TabsContent>
@@ -169,8 +179,8 @@ const Auth = () => {
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Create Account"}
+                <Button type="submit" className="w-full" disabled={signupLoading}>
+                  {signupLoading ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>

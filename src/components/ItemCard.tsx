@@ -24,14 +24,20 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
 
   return (
     <Link
-      to={`/item/${item.id}`}
-      className="group block rounded-xl border border-border bg-card overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
+      to={outOfStock ? "#" : `/item/${item.id}`}
+      onClick={outOfStock ? (e: React.MouseEvent) => e.preventDefault() : undefined}
+      className={`group block rounded-xl border border-border bg-card overflow-hidden transition-all ${outOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg hover:-translate-y-1"}`}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {item.images && item.images[0] ? (
-          <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+          <img src={item.images[0]} alt={item.title} className={`h-full w-full object-cover transition-transform duration-300 ${outOfStock ? "grayscale" : "group-hover:scale-105"}`} loading="lazy" />
         ) : (
           <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No image</div>
+        )}
+        {outOfStock && (
+          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md text-sm font-bold">Out of Stock</span>
+          </div>
         )}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
           <Badge variant={cat.variant} className="gap-1 text-xs font-semibold shadow-sm">
@@ -42,9 +48,6 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
             <Badge variant="secondary" className="gap-1 text-xs font-semibold shadow-sm">
               <Wrench className="h-3 w-3" /> Service
             </Badge>
-          )}
-          {outOfStock && (
-            <Badge variant="destructive" className="text-xs font-semibold shadow-sm">Out of Stock</Badge>
           )}
         </div>
       </div>
