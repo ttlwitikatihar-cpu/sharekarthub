@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw } from "lucide-react";
+import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -145,6 +145,16 @@ const Orders = () => {
     toast({ title: "Copied to clipboard" });
   };
 
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  const filteredOrders = useMemo(() => {
+    let items = [...orders];
+    if (statusFilter !== "all") items = items.filter((o: any) => o.status === statusFilter);
+    if (categoryFilter !== "all") items = items.filter((o: any) => o.listing?.category === categoryFilter);
+    return items;
+  }, [orders, statusFilter, categoryFilter]);
+
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -174,7 +184,7 @@ const Orders = () => {
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
-        <h1 className="text-2xl font-bold mb-6">My Orders</h1>
+        <h1 className="text-2xl font-bold mb-4">My Orders</h1>
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading...</p>
@@ -184,8 +194,44 @@ const Orders = () => {
             <p>No orders yet</p>
           </div>
         ) : (
+          <>
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px] text-xs h-8">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active / On Rent</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[130px] text-xs h-8">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="rent">Rental</SelectItem>
+                  <SelectItem value="sell">Purchase</SelectItem>
+                  <SelectItem value="donate">Donation</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground ml-auto">{filteredOrders.length} of {orders.length} orders</span>
+            </div>
+
+            {filteredOrders.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Package className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p>No orders match the selected filters</p>
+              </div>
+            ) : (
           <div className="space-y-4">
-            {orders.map((order: any) => {
+            {filteredOrders.map((order: any) => {
               const isBuyer = order.buyer_id === user.id;
               const isSeller = order.seller_id === user.id;
               const isRental = order.listing?.category === "rent";
@@ -360,6 +406,8 @@ const Orders = () => {
               );
             })}
           </div>
+            )}
+          </>
         )}
       </main>
       <Footer />

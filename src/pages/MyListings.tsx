@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Edit, RefreshCw, Package, Eye } from "lucide-react";
+import { ArrowLeft, Edit, RefreshCw, Package, Eye, Filter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const MyListings = () => {
   const { user } = useAuth();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["my-listings", user?.id],
@@ -28,6 +30,15 @@ const MyListings = () => {
     enabled: !!user,
   });
 
+  const filtered = useMemo(() => {
+    let items = [...listings];
+    if (statusFilter !== "all") {
+      items = items.filter((l: any) => statusFilter === "out_of_stock" ? l.status === "out_of_stock" : l.status === statusFilter);
+    }
+    if (categoryFilter !== "all") items = items.filter((l: any) => l.category === categoryFilter);
+    return items;
+  }, [listings, statusFilter, categoryFilter]);
+
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -42,12 +53,6 @@ const MyListings = () => {
       </div>
     );
   }
-
-  const available = listings.filter((l: any) => l.status === "active");
-  const outOfStock = listings.filter((l: any) => l.status === "out_of_stock");
-  const rentListings = listings.filter((l: any) => l.category === "rent");
-  const sellListings = listings.filter((l: any) => l.category === "sell");
-  const donateListings = listings.filter((l: any) => l.category === "donate");
 
   const statusColor: Record<string, string> = {
     active: "bg-primary/10 text-primary",
@@ -112,17 +117,6 @@ const MyListings = () => {
     </motion.div>
   );
 
-  const renderSection = (items: any[], emptyMessage: string) => (
-    items.length === 0 ? (
-      <div className="text-center py-12 text-muted-foreground">
-        <Package className="h-10 w-10 mx-auto mb-3 opacity-40" />
-        <p>{emptyMessage}</p>
-      </div>
-    ) : (
-      <div className="space-y-4">{items.map(renderListingCard)}</div>
-    )
-  );
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -130,27 +124,48 @@ const MyListings = () => {
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
-        <h1 className="text-2xl font-bold mb-6">My Listings</h1>
+        <h1 className="text-2xl font-bold mb-4">My Listings</h1>
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : (
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-4">
-              <TabsTrigger value="all">All ({listings.length})</TabsTrigger>
-              <TabsTrigger value="available">Active ({available.length})</TabsTrigger>
-              <TabsTrigger value="oos">Out of Stock ({outOfStock.length})</TabsTrigger>
-              <TabsTrigger value="rent">Rent ({rentListings.length})</TabsTrigger>
-              <TabsTrigger value="sell">Sell ({sellListings.length})</TabsTrigger>
-              <TabsTrigger value="donate">Donate ({donateListings.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="all">{renderSection(listings, "No listings yet")}</TabsContent>
-            <TabsContent value="available">{renderSection(available, "No active listings")}</TabsContent>
-            <TabsContent value="oos">{renderSection(outOfStock, "No out-of-stock listings")}</TabsContent>
-            <TabsContent value="rent">{renderSection(rentListings, "No rental listings")}</TabsContent>
-            <TabsContent value="sell">{renderSection(sellListings, "No sell listings")}</TabsContent>
-            <TabsContent value="donate">{renderSection(donateListings, "No donations")}</TabsContent>
-          </Tabs>
+          <>
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px] text-xs h-8">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Available</SelectItem>
+                  <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[130px] text-xs h-8">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="rent">Rented</SelectItem>
+                  <SelectItem value="sell">Sold</SelectItem>
+                  <SelectItem value="donate">Donated</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground ml-auto">{filtered.length} of {listings.length} listings</span>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Package className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p>No listings match the selected filters</p>
+              </div>
+            ) : (
+              <div className="space-y-4">{filtered.map(renderListingCard)}</div>
+            )}
+          </>
         )}
       </main>
       <Footer />
