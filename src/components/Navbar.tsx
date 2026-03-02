@@ -13,9 +13,10 @@ import {
 
 const NAV_LINKS = [
   { label: "Browse", href: "/" },
-  { label: "Leaderboard", href: "/leaderboard" },
-  { label: "Messages", href: "/chat" },
+  { label: "My Listings", href: "/my-listings" },
   { label: "Orders", href: "/orders" },
+  { label: "Messages", href: "/chat" },
+  { label: "Leaderboard", href: "/leaderboard" },
 ];
 
 const Navbar = () => {
