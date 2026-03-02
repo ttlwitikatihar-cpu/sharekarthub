@@ -14,6 +14,7 @@ import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import MyListings from "./pages/MyListings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/list-item" element={<ListItem />} />
             <Route path="/edit-listing/:id" element={<EditListing />} />
+            <Route path="/my-listings" element={<MyListings />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/orders" element={<Orders />} />

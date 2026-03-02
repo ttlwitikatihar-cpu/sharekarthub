@@ -1,28 +1,31 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const OTP_EXPIRY_HOURS = 48; // 2 days
+const OTP_EXPIRY_HOURS = 48;
 
 const isOtpExpired = (createdAt: string) => {
-  const created = new Date(createdAt).getTime();
-  const now = Date.now();
-  return now - created > OTP_EXPIRY_HOURS * 60 * 60 * 1000;
+  return Date.now() - new Date(createdAt).getTime() > OTP_EXPIRY_HOURS * 60 * 60 * 1000;
 };
 
 const getTimeRemaining = (createdAt: string) => {
-  const expiresAt = new Date(createdAt).getTime() + OTP_EXPIRY_HOURS * 60 * 60 * 1000;
-  const remaining = expiresAt - Date.now();
+  const remaining = new Date(createdAt).getTime() + OTP_EXPIRY_HOURS * 60 * 60 * 1000 - Date.now();
   if (remaining <= 0) return "Expired";
   const hours = Math.floor(remaining / (1000 * 60 * 60));
   const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
@@ -32,8 +35,15 @@ const getTimeRemaining = (createdAt: string) => {
 const Orders = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [otpInputs, setOtpInputs] = useState<Record<string, string>>({});
+  const [repostDialog, setRepostDialog] = useState<any>(null);
+  const [repostLoading, setRepostLoading] = useState(false);
+  const [repostQuantity, setRepostQuantity] = useState("1");
+  const [repostPrice, setRepostPrice] = useState("");
+  const [repostDeposit, setRepostDeposit] = useState("");
+  const [repostDescription, setRepostDescription] = useState("");
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders"],
@@ -48,7 +58,7 @@ const Orders = () => {
         (data || []).map(async (o: any) => {
           const { data: listing } = await supabase
             .from("listings")
-            .select("title, category")
+            .select("*")
             .eq("id", o.listing_id)
             .single();
           return { ...o, listing };
@@ -64,7 +74,7 @@ const Orders = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Order cancelled", description: "The pending request has been cancelled." });
+      toast({ title: "Order cancelled" });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     }
   };
@@ -72,13 +82,13 @@ const Orders = () => {
   const verifyHandoverOTP = async (orderId: string) => {
     const order = orders.find((o: any) => o.id === orderId);
     if (isOtpExpired(order?.created_at)) {
-      toast({ title: "OTP Expired", description: "This order has expired. Please cancel and create a new one.", variant: "destructive" });
+      toast({ title: "OTP Expired", description: "Please cancel and create a new order.", variant: "destructive" });
       return;
     }
     const input = otpInputs[`handover-${orderId}`];
     if (input === order?.handover_otp) {
       await supabase.from("orders").update({ handover_confirmed: true, status: "active" }).eq("id", orderId);
-      toast({ title: "Handover confirmed!", description: "Item has been handed over successfully." });
+      toast({ title: "Handover confirmed!" });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     } else {
       toast({ title: "Invalid OTP", variant: "destructive" });
@@ -90,11 +100,49 @@ const Orders = () => {
     const input = otpInputs[`return-${orderId}`];
     if (input === order?.return_otp) {
       await supabase.from("orders").update({ return_confirmed: true, status: "completed" }).eq("id", orderId);
-      toast({ title: "Return confirmed!", description: "Item has been returned successfully." });
+      toast({ title: "Return confirmed!" });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      // Show repost dialog for seller on rental return
+      const isSeller = order.seller_id === user?.id;
+      if (isSeller && order.listing?.category === "rent") {
+        setRepostDialog(order);
+        setRepostQuantity(String(order.quantity || 1));
+        setRepostPrice(String(order.listing?.price ?? ""));
+        setRepostDeposit(String(order.listing?.security_deposit ?? ""));
+        setRepostDescription(order.listing?.description || "");
+      }
     } else {
       toast({ title: "Invalid OTP", variant: "destructive" });
     }
+  };
+
+  const handleRepost = async () => {
+    if (!repostDialog?.listing) return;
+    setRepostLoading(true);
+    try {
+      // Update existing listing to refill stock
+      const { error } = await supabase.from("listings").update({
+        quantity: Number(repostQuantity) || 1,
+        price: Number(repostPrice) || 0,
+        security_deposit: Number(repostDeposit) || 0,
+        description: repostDescription,
+        status: "active",
+      } as any).eq("id", repostDialog.listing.id);
+      if (error) throw error;
+      toast({ title: "Listing reposted!", description: "Your item is back on the marketplace." });
+      setRepostDialog(null);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setRepostLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard" });
   };
 
   if (!user) {
@@ -150,6 +198,7 @@ const Orders = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="border border-border rounded-xl p-4 space-y-3"
                 >
+                  {/* Header */}
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">{order.listing?.title || "Item"}</h3>
                     <div className="flex items-center gap-2">
@@ -157,6 +206,55 @@ const Orders = () => {
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor[order.status] || ""}`}>
                         {order.status}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Order Details */}
+                  <div className="bg-muted/50 rounded-lg p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Order ID</span>
+                      <div className="flex items-center gap-1 font-mono font-medium">
+                        <span className="truncate max-w-[100px]">{order.id.slice(0, 8)}...</span>
+                        <button onClick={() => copyToClipboard(order.id)} className="text-muted-foreground hover:text-primary">
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Date</span>
+                      <p className="font-medium">{new Date(order.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Time</span>
+                      <p className="font-medium">{new Date(order.created_at).toLocaleTimeString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Quantity</span>
+                      <p className="font-medium">{order.quantity}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Category</span>
+                      <p className="font-medium capitalize">{order.listing?.category || "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Role</span>
+                      <p className="font-medium">{isBuyer ? "Buyer" : "Seller"}</p>
+                    </div>
+                    {order.listing?.price > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">Price</span>
+                        <p className="font-medium">₹{order.listing.price}</p>
+                      </div>
+                    )}
+                    {isRental && order.listing?.security_deposit > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">Deposit</span>
+                        <p className="font-medium">₹{order.listing.security_deposit}</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-muted-foreground">Updated</span>
+                      <p className="font-medium">{new Date(order.updated_at).toLocaleString()}</p>
                     </div>
                   </div>
 
@@ -253,12 +351,7 @@ const Orders = () => {
                   {/* Cancel button for pending orders */}
                   {order.status === "pending" && (isBuyer || isSeller) && (
                     <div className="pt-1">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => cancelOrder(order.id)}
-                      >
+                      <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => cancelOrder(order.id)}>
                         <Trash2 className="h-3.5 w-3.5" /> Cancel Order
                       </Button>
                     </div>
@@ -270,6 +363,48 @@ const Orders = () => {
         )}
       </main>
       <Footer />
+
+      {/* Repost Dialog */}
+      <Dialog open={!!repostDialog} onOpenChange={(open) => !open && setRepostDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-primary" />
+              Relist Item
+            </DialogTitle>
+            <DialogDescription>
+              The rental item "{repostDialog?.listing?.title}" has been returned. Would you like to relist it?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Quantity to relist</Label>
+              <Input type="number" min="1" value={repostQuantity} onChange={(e) => setRepostQuantity(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Price (₹)</Label>
+                <Input type="number" value={repostPrice} onChange={(e) => setRepostPrice(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Deposit (₹)</Label>
+                <Input type="number" value={repostDeposit} onChange={(e) => setRepostDeposit(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea rows={3} value={repostDescription} onChange={(e) => setRepostDescription(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRepostDialog(null)}>Skip</Button>
+            <Button onClick={handleRepost} disabled={repostLoading} className="gap-1.5">
+              <RefreshCw className="h-4 w-4" />
+              {repostLoading ? "Relisting..." : "Relist Now"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
