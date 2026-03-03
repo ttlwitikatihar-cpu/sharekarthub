@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Shield, Users, Package, ShoppingCart, Trash2, Eye, Ban, CheckCircle, Search, AlertTriangle } from "lucide-react";
+import { Shield, Users, Package, ShoppingCart, Trash2, Eye, Ban, CheckCircle, Search, AlertTriangle, UserX, FileCheck, FileX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -22,7 +22,8 @@ const Admin = () => {
   const [search, setSearch] = useState("");
   const [listingFilter, setListingFilter] = useState("all");
   const [orderFilter, setOrderFilter] = useState("all");
-  const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string; title: string } | null>(null);
+  const [userFilter, setUserFilter] = useState("all");
+  const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string; title: string; userId?: string } | null>(null);
 
   // Check admin role
   const { data: isAdmin, isLoading: roleLoading } = useQuery({
@@ -102,6 +103,35 @@ const Admin = () => {
     },
   });
 
+  // KYC approve/reject
+  const updateKyc = useMutation({
+    mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
+      const { error } = await supabase.from("profiles").update({ kyc_status: status }).eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({ title: `KYC ${vars.status === "verified" ? "approved" : "rejected"}` });
+    },
+  });
+
+  // Delete user's profile (effectively banning them)
+  const deleteUserProfile = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      // Delete all their listings first
+      await supabase.from("listings").delete().eq("user_id", userId);
+      // Update profile to mark as banned
+      const { error } = await supabase.from("profiles").update({ kyc_status: "banned", bio: "[Account suspended by admin]" }).eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+      toast({ title: "User account suspended" });
+      setConfirmDelete(null);
+    },
+  });
+
   if (roleLoading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Checking permissions...</div>;
   if (!isAdmin) return (
     <div className="min-h-screen flex flex-col">
@@ -117,7 +147,14 @@ const Admin = () => {
     </div>
   );
 
-  const filteredUsers = users.filter(u => !search || u.full_name?.toLowerCase().includes(search.toLowerCase()) || u.user_id?.includes(search));
+  const filteredUsers = users.filter(u => {
+    if (userFilter === "verified" && u.kyc_status !== "verified") return false;
+    if (userFilter === "pending" && u.kyc_status !== "pending") return false;
+    if (userFilter === "unverified" && u.kyc_status !== "unverified") return false;
+    if (userFilter === "banned" && u.kyc_status !== "banned") return false;
+    if (search && !u.full_name?.toLowerCase().includes(search.toLowerCase()) && !u.user_id?.includes(search)) return false;
+    return true;
+  });
   const filteredListings = listings.filter(l => {
     if (listingFilter !== "all" && l.status !== listingFilter && l.category !== listingFilter) return false;
     if (search && !l.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -179,24 +216,59 @@ const Admin = () => {
 
           {/* Users Tab */}
           <TabsContent value="users">
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {["all", "verified", "pending", "unverified", "banned"].map(f => (
+                <Button key={f} size="sm" variant={userFilter === f ? "default" : "outline"} onClick={() => setUserFilter(f)} className="text-xs capitalize">
+                  {f}
+                </Button>
+              ))}
+            </div>
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               {filteredUsers.length === 0 ? (
                 <p className="text-center py-10 text-muted-foreground">No users found</p>
               ) : filteredUsers.map(u => (
-                <div key={u.id} className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-b-0">
+                <div key={u.id} className="flex items-center gap-3 px-5 py-4 border-b border-border last:border-b-0 flex-wrap sm:flex-nowrap">
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                     {(u.full_name || "?").charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{u.full_name || "Unnamed"}</p>
                     <p className="text-xs text-muted-foreground truncate">{u.phone || "No phone"} · {u.location || "No location"}</p>
+                    <p className="text-xs text-muted-foreground">ID Type: {u.id_type || "—"} · ID#: {u.id_number || "—"}</p>
                   </div>
-                  <Badge variant={u.kyc_status === "verified" ? "default" : "secondary"} className="text-xs shrink-0">
+                  <Badge variant={u.kyc_status === "verified" ? "default" : u.kyc_status === "banned" ? "destructive" : "secondary"} className="text-xs shrink-0">
                     {u.kyc_status}
                   </Badge>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-muted-foreground">Donations: {u.donations_count ?? 0}</p>
                     <p className="text-xs text-muted-foreground">Points: {u.reward_points ?? 0}</p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    {u.kyc_status === "pending" && (
+                      <>
+                        <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => updateKyc.mutate({ userId: u.user_id, status: "verified" })}>
+                          <FileCheck className="h-3.5 w-3.5" /> Approve
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => updateKyc.mutate({ userId: u.user_id, status: "rejected" })}>
+                          <FileX className="h-3.5 w-3.5" /> Reject
+                        </Button>
+                      </>
+                    )}
+                    {u.kyc_status === "rejected" && (
+                      <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => updateKyc.mutate({ userId: u.user_id, status: "verified" })}>
+                        <FileCheck className="h-3.5 w-3.5" /> Approve
+                      </Button>
+                    )}
+                    {u.kyc_status !== "banned" && u.user_id !== user?.id && (
+                      <Button size="sm" variant="outline" className="text-xs gap-1 text-destructive" onClick={() => setConfirmDelete({ type: "user", id: u.id, title: u.full_name || "User", userId: u.user_id })}>
+                        <UserX className="h-3.5 w-3.5" /> Suspend
+                      </Button>
+                    )}
+                    {u.kyc_status === "banned" && (
+                      <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => updateKyc.mutate({ userId: u.user_id, status: "unverified" })}>
+                        <CheckCircle className="h-3.5 w-3.5" /> Unban
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -294,17 +366,33 @@ const Admin = () => {
         </Tabs>
       </main>
 
-      {/* Delete Confirmation */}
+      {/* Delete/Suspend Confirmation */}
       <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete "{confirmDelete?.title}"?</DialogTitle>
+            <DialogTitle>
+              {confirmDelete?.type === "user" ? `Suspend "${confirmDelete?.title}"?` : `Delete "${confirmDelete?.title}"?`}
+            </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+          <p className="text-sm text-muted-foreground">
+            {confirmDelete?.type === "user"
+              ? "This will suspend the user account and remove all their listings."
+              : "This action cannot be undone."}
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => confirmDelete && deleteListing.mutate(confirmDelete.id)}>
-              Delete
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!confirmDelete) return;
+                if (confirmDelete.type === "user" && confirmDelete.userId) {
+                  deleteUserProfile.mutate({ userId: confirmDelete.userId });
+                } else {
+                  deleteListing.mutate(confirmDelete.id);
+                }
+              }}
+            >
+              {confirmDelete?.type === "user" ? "Suspend Account" : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
