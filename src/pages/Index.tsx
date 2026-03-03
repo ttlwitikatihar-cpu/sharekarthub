@@ -24,8 +24,8 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ListingCategory | "all">("all");
   const [location, setLocation] = useState("");
-  const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest" | "nearest">("popular");
-  const { position, loading: geoLoading, requestLocation } = useGeolocation();
+  const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest" | "nearest">("nearest");
+  const { position, loading: geoLoading, requestLocation } = useGeolocation(true);
   const { data: listings = [], isLoading, error } = useQuery({
     queryKey: ["listings"],
     queryFn: async () => {

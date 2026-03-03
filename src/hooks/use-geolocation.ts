@@ -5,7 +5,7 @@ interface GeoPosition {
   longitude: number;
 }
 
-export const useGeolocation = () => {
+export const useGeolocation = (autoRequest = false) => {
   const [position, setPosition] = useState<GeoPosition | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +28,10 @@ export const useGeolocation = () => {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }, []);
+
+  useEffect(() => {
+    if (autoRequest) requestLocation();
+  }, [autoRequest, requestLocation]);
 
   return { position, error, loading, requestLocation };
 };
