@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import MyListings from "./pages/MyListings";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
