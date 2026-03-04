@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil, Minus, Plus } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil, Minus, Plus, Flag } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import ReportDialog from "@/components/ReportDialog";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -240,6 +241,7 @@ const ItemDetail = () => {
               )}
               <Button variant="ghost" size="icon"><Heart className="h-5 w-5" /></Button>
               <Button variant="ghost" size="icon"><Share2 className="h-5 w-5" /></Button>
+              {!isOwner && user && <ReportDialog reportedListingId={item.id} reportedUserId={item.user_id} triggerVariant="icon" />}
             </div>
           </motion.div>
         </div>
