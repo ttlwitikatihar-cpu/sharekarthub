@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShieldCheck, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Upload, AlertCircle, CheckCircle2, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,7 @@ const Profile = () => {
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
   const [profileLocation, setProfileLocation] = useState("");
+  const [shopName, setShopName] = useState("");
 
   // KYC fields
   const [address, setAddress] = useState("");
@@ -57,6 +58,7 @@ const Profile = () => {
       setPhone(profile.phone || "");
       setBio(profile.bio || "");
       setProfileLocation(profile.location || "");
+      setShopName((profile as any).shop_name || "");
       setAddress((profile as any).address || "");
       setCity((profile as any).city || "");
       setState((profile as any).state || "");
@@ -90,7 +92,8 @@ const Profile = () => {
         phone,
         bio,
         location: profileLocation,
-      }).eq("user_id", user.id);
+        shop_name: shopName || null,
+      } as any).eq("user_id", user.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       toast({ title: "Profile updated!" });
@@ -171,6 +174,12 @@ const Profile = () => {
                   <Label>Location</Label>
                   <Input placeholder="e.g. Mumbai, MH" value={profileLocation} onChange={(e) => setProfileLocation(e.target.value)} />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Store className="h-4 w-4" /> Shop Name <span className="text-xs text-muted-foreground">(optional — for businesses)</span>
+                </Label>
+                <Input placeholder="e.g. Krishna Electronics" value={shopName} onChange={(e) => setShopName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Bio</Label>

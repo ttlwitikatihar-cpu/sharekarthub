@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { MapPin, Clock, IndianRupee, Gift, Wrench, Package } from "lucide-react";
+import { MapPin, Clock, IndianRupee, Gift, Wrench, Star, Store, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
@@ -21,6 +23,19 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
   const CatIcon = cat.icon;
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
   const listingType = (item as any).listing_type as string | undefined;
+
+  const { data: sellerProfile } = useQuery({
+    queryKey: ["seller-profile", item.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, shop_name, rating, total_reviews")
+        .eq("user_id", item.user_id)
+        .single();
+      return data;
+    },
+    staleTime: 60000,
+  });
 
   return (
     <Link
@@ -54,6 +69,30 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
 
       <div className="p-4 space-y-2">
         <h3 className="font-semibold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
+
+        {/* Seller / Shop info */}
+        {sellerProfile && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {sellerProfile.shop_name ? (
+              <>
+                <Store className="h-3 w-3 shrink-0" />
+                <span className="truncate">{sellerProfile.shop_name}</span>
+              </>
+            ) : (
+              <>
+                <User className="h-3 w-3 shrink-0" />
+                <span className="truncate">{sellerProfile.full_name || "Seller"}</span>
+              </>
+            )}
+            {sellerProfile.rating && Number(sellerProfile.rating) > 0 && (
+              <span className="ml-auto flex items-center gap-0.5 text-accent font-medium">
+                <Star className="h-3 w-3 fill-accent" />
+                {Number(sellerProfile.rating).toFixed(1)}
+              </span>
+            )}
+          </div>
+        )}
+
         {(item.location || distanceKm != null) && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />

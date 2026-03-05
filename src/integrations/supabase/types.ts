@@ -261,6 +261,7 @@ export type Database = {
           pincode: string | null
           rating: number | null
           reward_points: number | null
+          shop_name: string | null
           state: string | null
           total_reviews: number | null
           updated_at: string
@@ -285,6 +286,7 @@ export type Database = {
           pincode?: string | null
           rating?: number | null
           reward_points?: number | null
+          shop_name?: string | null
           state?: string | null
           total_reviews?: number | null
           updated_at?: string
@@ -309,6 +311,7 @@ export type Database = {
           pincode?: string | null
           rating?: number | null
           reward_points?: number | null
+          shop_name?: string | null
           state?: string | null
           total_reviews?: number | null
           updated_at?: string
