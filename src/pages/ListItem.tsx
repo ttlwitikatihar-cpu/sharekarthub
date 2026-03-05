@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Upload, ArrowLeft, X, ImagePlus, Navigation } from "lucide-react";
+import { ArrowLeft, X, ImagePlus, Navigation, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { useQuery } from "@tanstack/react-query";
 
 const ListItem = () => {
   const navigate = useNavigate();
@@ -33,6 +34,15 @@ const ListItem = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { position, loading: geoLoading, requestLocation } = useGeolocation();
 
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile-listitem", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("shop_name").eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (imageFiles.length + files.length > 5) {
@@ -41,8 +51,7 @@ const ListItem = () => {
     }
     const newFiles = [...imageFiles, ...files];
     setImageFiles(newFiles);
-    const previews = newFiles.map((f) => URL.createObjectURL(f));
-    setImagePreviews(previews);
+    setImagePreviews(newFiles.map((f) => URL.createObjectURL(f)));
   };
 
   const removeImage = (index: number) => {
@@ -123,6 +132,13 @@ const ListItem = () => {
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-2xl font-bold mb-1">List an Item</h1>
           <p className="text-sm text-muted-foreground mb-6">Share something with the community — rent it, sell it, or give it away.</p>
+
+          {profile?.shop_name && (
+            <div className="flex items-center gap-2 text-sm bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 mb-4">
+              <Store className="h-4 w-4 text-primary" />
+              <span>Listing as <strong>{profile.shop_name}</strong></span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">

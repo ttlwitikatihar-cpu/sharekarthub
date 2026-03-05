@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, MapPin, SlidersHorizontal, ArrowUpDown, Navigation } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, ArrowUpDown, Navigation, Store } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,10 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ListingCategory | "all">("all");
   const [location, setLocation] = useState("");
+  const [shopSearch, setShopSearch] = useState("");
   const [sortBy, setSortBy] = useState<"popular" | "price-asc" | "price-desc" | "newest" | "nearest">("nearest");
   const { position, loading: geoLoading, requestLocation } = useGeolocation(true);
+
   const { data: listings = [], isLoading, error } = useQuery({
     queryKey: ["listings"],
     queryFn: async () => {
@@ -40,11 +42,34 @@ const Index = () => {
     staleTime: 30000,
   });
 
+  // Fetch all seller profiles for shop name search
+  const { data: sellerProfiles = [] } = useQuery({
+    queryKey: ["seller-profiles-index"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("user_id, shop_name, full_name");
+      return data || [];
+    },
+    staleTime: 60000,
+  });
+
+  const shopMap = useMemo(() => {
+    const m = new Map<string, { shop_name: string | null; full_name: string }>();
+    sellerProfiles.forEach((p: any) => m.set(p.user_id, { shop_name: p.shop_name, full_name: p.full_name }));
+    return m;
+  }, [sellerProfiles]);
+
   const filtered = useMemo(() => {
     let items = [...listings];
     if (category !== "all") items = items.filter((i) => i.category === category);
     if (search) items = items.filter((i) => i.title.toLowerCase().includes(search.toLowerCase()));
     if (location) items = items.filter((i) => i.location?.toLowerCase().includes(location.toLowerCase()));
+    if (shopSearch) {
+      const q = shopSearch.toLowerCase();
+      items = items.filter((i) => {
+        const seller = shopMap.get(i.user_id);
+        return seller?.shop_name?.toLowerCase().includes(q) || seller?.full_name?.toLowerCase().includes(q);
+      });
+    }
 
     switch (sortBy) {
       case "popular": items.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)); break;
@@ -54,21 +79,16 @@ const Index = () => {
       case "nearest":
         if (position) {
           items.sort((a, b) => {
-            const aLat = a.latitude;
-            const aLng = a.longitude;
-            const bLat = b.latitude;
-            const bLng = b.longitude;
-            if (aLat == null || aLng == null) return 1;
-            if (bLat == null || bLng == null) return -1;
-            const aDist = getDistance(position.latitude, position.longitude, aLat, aLng);
-            const bDist = getDistance(position.latitude, position.longitude, bLat, bLng);
-            return aDist - bDist;
+            if (a.latitude == null || a.longitude == null) return 1;
+            if (b.latitude == null || b.longitude == null) return -1;
+            return getDistance(position.latitude, position.longitude, a.latitude, a.longitude) -
+                   getDistance(position.latitude, position.longitude, b.latitude, b.longitude);
           });
         }
         break;
     }
     return items;
-  }, [listings, category, search, location, sortBy, position]);
+  }, [listings, category, search, location, shopSearch, sortBy, position, shopMap]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -98,15 +118,19 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-2"
+            className="max-w-3xl mx-auto flex flex-col sm:flex-row gap-2"
           >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
-            <div className="relative flex-1 sm:max-w-[200px]">
+            <div className="relative flex-1 sm:max-w-[180px]">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="pl-9" />
+            </div>
+            <div className="relative flex-1 sm:max-w-[180px]">
+              <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Shop name" value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} className="pl-9" />
             </div>
             <Button
               variant="outline"

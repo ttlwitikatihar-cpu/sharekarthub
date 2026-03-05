@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil, Minus, Plus, Flag } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Clock, ArrowLeft, MessageCircle, Heart, Share2, AlertTriangle, Pencil, Minus, Plus, Flag, Store, User, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -31,16 +31,53 @@ const ItemDetail = () => {
         .single();
       if (error) throw error;
       
-      // Fetch provider profile separately
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, rating, kyc_status")
+        .select("full_name, avatar_url, rating, total_reviews, kyc_status, phone, shop_name")
         .eq("user_id", data.user_id)
         .single();
       
       return { ...data, profile };
     },
     enabled: !!id,
+  });
+
+  // Check if seller has accepted a conversation with this buyer (contact revealed)
+  const { data: hasAcceptedConversation } = useQuery({
+    queryKey: ["conversation-exists", id, user?.id],
+    queryFn: async () => {
+      if (!user || !item) return false;
+      const { data } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("listing_id", item.id)
+        .eq("buyer_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user && !!item && user.id !== item?.user_id,
+  });
+
+  // Fetch seller reviews
+  const { data: sellerReviews = [] } = useQuery({
+    queryKey: ["seller-reviews", item?.user_id],
+    queryFn: async () => {
+      // Get all listing IDs by this seller
+      const { data: sellerListings } = await supabase
+        .from("listings")
+        .select("id")
+        .eq("user_id", item!.user_id);
+      if (!sellerListings?.length) return [];
+      const ids = sellerListings.map((l: any) => l.id);
+      const { data: reviews } = await supabase
+        .from("reviews")
+        .select("rating, comment, created_at, reviewer_id")
+        .in("listing_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return reviews || [];
+    },
+    enabled: !!item,
   });
 
   if (isLoading) {
@@ -70,11 +107,14 @@ const ItemDetail = () => {
   }
 
   const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate" };
-  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; kyc_status: string } | null;
+  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; phone: string | null; shop_name: string | null } | null;
   const verified = profile?.kyc_status === "verified";
   const availableQty = item.quantity ?? 0;
   const outOfStock = item.status === "out_of_stock" || availableQty <= 0;
   const isOwner = user?.id === item.user_id;
+  const contactRevealed = isOwner || hasAcceptedConversation;
+  const avgRating = profile?.rating ? Number(profile.rating) : 0;
+  const totalReviews = profile?.total_reviews ?? 0;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -113,7 +153,6 @@ const ItemDetail = () => {
 
             <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               {item.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{item.location}</span>}
-              {profile?.rating && <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-accent text-accent" />{profile.rating}</span>}
               <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{item.condition}</span>
             </div>
 
@@ -140,21 +179,73 @@ const ItemDetail = () => {
 
             <Separator />
 
+            {/* Seller Info */}
             {profile && (
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                  {profile.full_name?.charAt(0) || "?"}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-sm">{profile.full_name || "User"}</span>
-                    {verified && <ShieldCheck className="h-4 w-4 text-primary" />}
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                    {profile.full_name?.charAt(0) || "?"}
                   </div>
-                  {profile.rating && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Star className="h-3 w-3 fill-accent text-accent" />{profile.rating} rating
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5">
+                      {profile.shop_name ? (
+                        <span className="font-semibold text-sm flex items-center gap-1"><Store className="h-3.5 w-3.5" />{profile.shop_name}</span>
+                      ) : (
+                        <span className="font-semibold text-sm flex items-center gap-1"><User className="h-3.5 w-3.5" />{profile.full_name || "Seller"}</span>
+                      )}
+                      {verified && <ShieldCheck className="h-4 w-4 text-primary" />}
+                    </div>
+                    {profile.shop_name && (
+                      <p className="text-xs text-muted-foreground">{profile.full_name}</p>
+                    )}
+                  </div>
+                  {/* Rating */}
+                  {avgRating > 0 && (
+                    <div className="text-right">
+                      <div className="flex items-center gap-1 text-sm font-semibold">
+                        <Star className="h-4 w-4 fill-accent text-accent" />
+                        {avgRating.toFixed(1)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{totalReviews} review{totalReviews !== 1 ? "s" : ""}</p>
                     </div>
                   )}
+                </div>
+
+                {/* Contact details - hidden until seller accepts */}
+                {!isOwner && (
+                  <div className="flex items-center gap-2 text-xs rounded-lg bg-muted/50 px-3 py-2">
+                    {contactRevealed ? (
+                      <>
+                        <Eye className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-foreground">Phone: {profile.phone || "Not provided"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">Contact details hidden until seller accepts your request</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Seller Reviews */}
+            {sellerReviews.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">Seller Reviews</h3>
+                <div className="space-y-2 max-h-48 overflow-auto">
+                  {sellerReviews.map((r: any, i: number) => (
+                    <div key={i} className="rounded-lg border border-border bg-card p-3">
+                      <div className="flex items-center gap-1 mb-1">
+                        {Array.from({ length: 5 }).map((_, si) => (
+                          <Star key={si} className={`h-3 w-3 ${si < r.rating ? "fill-accent text-accent" : "text-muted-foreground/30"}`} />
+                        ))}
+                        <span className="text-xs text-muted-foreground ml-2">{new Date(r.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
