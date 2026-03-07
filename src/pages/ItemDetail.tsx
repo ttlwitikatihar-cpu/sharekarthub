@@ -302,6 +302,7 @@ const ItemDetail = () => {
                       const msg = error.message.includes("stock") ? "Not enough stock available." : error.message;
                       toast({ title: "Cannot place order", description: msg, variant: "destructive" });
                     } else {
+                      trackActivity("placed_order", `Ordered ${orderQty}x "${item.title}"`, { listing_id: item.id, category: item.category });
                       toast({ title: "Order placed!", description: `${orderQty} item(s) ordered. Check your orders for OTP verification.` });
                       navigate("/orders");
                     }
