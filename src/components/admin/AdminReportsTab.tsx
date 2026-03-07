@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Flag, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
+import { Flag, CheckCircle, XCircle, Eye, ChevronDown, ChevronUp, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
+  const [expandedReport, setExpandedReport] = useState<string | null>(null);
   const [resolveDialog, setResolveDialog] = useState<{ id: string; status: string } | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
 
@@ -33,11 +34,10 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
     },
   });
 
-  // Fetch reporter and reported user names
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-report-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name");
+      const { data } = await supabase.from("profiles").select("user_id, full_name, shop_name, phone, kyc_status");
       return data || [];
     },
   });
@@ -46,6 +46,22 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
     if (!uid) return "—";
     return profiles.find(p => p.user_id === uid)?.full_name || uid.slice(0, 8);
   };
+
+  const getProfile = (uid: string | null) => {
+    if (!uid) return null;
+    return profiles.find(p => p.user_id === uid);
+  };
+
+  // Fetch listing details for expanded report
+  const expandedItem = reports.find((r: any) => r.id === expandedReport);
+  const { data: reportedListing } = useQuery({
+    queryKey: ["admin-reported-listing", expandedItem?.reported_listing_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("listings").select("*").eq("id", expandedItem!.reported_listing_id).single();
+      return data;
+    },
+    enabled: !!expandedItem?.reported_listing_id,
+  });
 
   const resolveReport = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
@@ -81,47 +97,105 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
           <p className="text-center py-10 text-muted-foreground">Loading...</p>
         ) : filtered.length === 0 ? (
           <p className="text-center py-10 text-muted-foreground">No reports found</p>
-        ) : filtered.map((r: any) => (
-          <div key={r.id} className="px-5 py-4 border-b border-border last:border-b-0">
-            <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
-              <Flag className="h-4 w-4 text-destructive mt-1 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm">
-                  {r.reported_listing_id ? "Reported Listing" : "Reported User"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  By: {getName(r.reported_by)} · 
-                  {r.reported_user_id && ` User: ${getName(r.reported_user_id)} ·`}
-                  {r.reported_listing_id && ` Listing: ${r.reported_listing_id.slice(0, 8)}… ·`}
-                  {" "}{new Date(r.created_at).toLocaleDateString()}
-                </p>
-                <p className="text-sm mt-1"><strong>Reason:</strong> {r.reason}</p>
-                {r.details && <p className="text-xs text-muted-foreground mt-0.5">{r.details}</p>}
-                {r.admin_notes && <p className="text-xs text-primary mt-1">Admin: {r.admin_notes}</p>}
+        ) : filtered.map((r: any) => {
+          const isExpanded = expandedReport === r.id;
+          return (
+            <div key={r.id} className="border-b border-border last:border-b-0">
+              <div
+                className="px-5 py-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                onClick={() => setExpandedReport(isExpanded ? null : r.id)}
+              >
+                <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
+                  <Flag className="h-4 w-4 text-destructive mt-1 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">
+                      {r.reported_listing_id ? "Reported Listing" : "Reported User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      By: {getName(r.reported_by)} · {new Date(r.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm mt-1"><strong>Reason:</strong> {r.reason}</p>
+                  </div>
+                  <Badge variant={r.status === "resolved" ? "default" : r.status === "dismissed" ? "secondary" : "destructive"} className="text-xs shrink-0">
+                    {r.status}
+                  </Badge>
+                  <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                    {r.reported_listing_id && (
+                      <Button size="icon" variant="ghost" onClick={() => navigate(`/item/${r.reported_listing_id}`)} title="View Listing">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {r.status === "pending" && (
+                      <>
+                        <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setResolveDialog({ id: r.id, status: "resolved" }); setAdminNotes(""); }}>
+                          <CheckCircle className="h-3.5 w-3.5" /> Resolve
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setResolveDialog({ id: r.id, status: "dismissed" }); setAdminNotes(""); }}>
+                          <XCircle className="h-3.5 w-3.5" /> Dismiss
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                </div>
               </div>
-              <Badge variant={r.status === "resolved" ? "default" : r.status === "dismissed" ? "secondary" : "destructive"} className="text-xs shrink-0">
-                {r.status}
-              </Badge>
-              <div className="flex gap-1 shrink-0">
-                {r.reported_listing_id && (
-                  <Button size="icon" variant="ghost" onClick={() => navigate(`/item/${r.reported_listing_id}`)} title="View Listing">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                )}
-                {r.status === "pending" && (
-                  <>
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setResolveDialog({ id: r.id, status: "resolved" }); setAdminNotes(""); }}>
-                      <CheckCircle className="h-3.5 w-3.5" /> Resolve
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setResolveDialog({ id: r.id, status: "dismissed" }); setAdminNotes(""); }}>
-                      <XCircle className="h-3.5 w-3.5" /> Dismiss
-                    </Button>
-                  </>
-                )}
-              </div>
+
+              {isExpanded && (
+                <div className="px-5 pb-5 bg-muted/20 border-t border-border">
+                  <div className="grid md:grid-cols-2 gap-4 pt-4">
+                    {/* Report Details */}
+                    <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+                      <h4 className="font-semibold text-sm">🚩 Report Details</h4>
+                      <div className="text-xs space-y-1 text-muted-foreground">
+                        <p><strong className="text-foreground">Report ID:</strong> {r.id}</p>
+                        <p><strong className="text-foreground">Reason:</strong> {r.reason}</p>
+                        <p><strong className="text-foreground">Details:</strong> {r.details || "—"}</p>
+                        <p><strong className="text-foreground">Status:</strong> {r.status}</p>
+                        <p><strong className="text-foreground">Filed:</strong> {new Date(r.created_at).toLocaleString()}</p>
+                        {r.admin_notes && <p><strong className="text-foreground">Admin Notes:</strong> {r.admin_notes}</p>}
+                        {r.resolved_at && <p><strong className="text-foreground">Resolved:</strong> {new Date(r.resolved_at).toLocaleString()}</p>}
+                        {r.resolved_by && <p><strong className="text-foreground">Resolved By:</strong> {getName(r.resolved_by)}</p>}
+                      </div>
+                    </div>
+
+                    {/* Involved Parties */}
+                    <div className="space-y-4">
+                      {r.reported_by && (
+                        <div className="rounded-lg border border-border bg-card p-4">
+                          <h5 className="text-xs font-semibold mb-2 flex items-center gap-1"><User className="h-3.5 w-3.5" /> Reporter</h5>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p><strong className="text-foreground">Name:</strong> {getName(r.reported_by)}</p>
+                            <p><strong className="text-foreground">KYC:</strong> {getProfile(r.reported_by)?.kyc_status || "—"}</p>
+                          </div>
+                        </div>
+                      )}
+                      {r.reported_user_id && (
+                        <div className="rounded-lg border border-border bg-card p-4">
+                          <h5 className="text-xs font-semibold mb-2 flex items-center gap-1"><User className="h-3.5 w-3.5" /> Reported User</h5>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p><strong className="text-foreground">Name:</strong> {getName(r.reported_user_id)}</p>
+                            <p><strong className="text-foreground">KYC:</strong> {getProfile(r.reported_user_id)?.kyc_status || "—"}</p>
+                          </div>
+                        </div>
+                      )}
+                      {reportedListing && (
+                        <div className="rounded-lg border border-border bg-card p-4">
+                          <h5 className="text-xs font-semibold mb-2">📦 Reported Listing</h5>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p><strong className="text-foreground">Title:</strong> {reportedListing.title}</p>
+                            <p><strong className="text-foreground">Category:</strong> {reportedListing.category}</p>
+                            <p><strong className="text-foreground">Status:</strong> {reportedListing.status}</p>
+                            <p><strong className="text-foreground">Price:</strong> ₹{reportedListing.price ?? 0}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <Dialog open={!!resolveDialog} onOpenChange={() => setResolveDialog(null)}>
