@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReportDialog from "@/components/ReportDialog";
+import { trackActivity } from "@/lib/trackActivity";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -301,6 +302,7 @@ const ItemDetail = () => {
                       const msg = error.message.includes("stock") ? "Not enough stock available." : error.message;
                       toast({ title: "Cannot place order", description: msg, variant: "destructive" });
                     } else {
+                      trackActivity("placed_order", `Ordered ${orderQty}x "${item.title}"`, { listing_id: item.id, category: item.category });
                       toast({ title: "Order placed!", description: `${orderQty} item(s) ordered. Check your orders for OTP verification.` });
                       navigate("/orders");
                     }

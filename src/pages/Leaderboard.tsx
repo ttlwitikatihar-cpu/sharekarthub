@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Trophy, Gift } from "lucide-react";
+import { Trophy, Gift, Medal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 const getBadge = (rank: number) => {
   if (rank === 1) return "🏆";
@@ -14,12 +15,12 @@ const getBadge = (rank: number) => {
 };
 
 const Leaderboard = () => {
-  const { data: donors = [], isLoading } = useQuery({
+  const { data: donors = [], isLoading, refetch } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, full_name, avatar_url, donations_count, reward_points")
+        .select("user_id, full_name, avatar_url, donations_count, reward_points, shop_name")
         .gt("donations_count", 0)
         .order("donations_count", { ascending: false })
         .limit(20);
@@ -28,13 +29,33 @@ const Leaderboard = () => {
         rank: i + 1,
         userId: d.user_id,
         name: d.full_name || "Anonymous",
+        shopName: d.shop_name,
         donationsCount: d.donations_count ?? 0,
         points: d.reward_points ?? 0,
         badge: getBadge(i + 1),
       }));
     },
-    staleTime: 60000,
+    staleTime: 30000,
+    refetchInterval: 60000, // Auto-refresh every minute
   });
+
+  // Realtime subscription for profile changes (donations updates)
+  useEffect(() => {
+    const channel = supabase
+      .channel("leaderboard-updates")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload) => {
+          if (payload.new.donations_count !== payload.old?.donations_count) {
+            refetch();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [refetch]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -45,7 +66,7 @@ const Leaderboard = () => {
             <Trophy className="h-7 w-7 text-accent" />
           </div>
           <h1 className="text-3xl font-bold">Donor Leaderboard</h1>
-          <p className="text-muted-foreground mt-2">Celebrating our most generous community members</p>
+          <p className="text-muted-foreground mt-2">Celebrating our most generous community members · Auto-updates on new donations</p>
         </motion.div>
 
         {isLoading ? (
@@ -73,8 +94,14 @@ const Leaderboard = () => {
                       {entry.name.charAt(0)}
                     </div>
                     <h3 className="font-semibold text-sm">{entry.name}</h3>
+                    {entry.shopName && <p className="text-xs text-primary">🏪 {entry.shopName}</p>}
                     <p className="text-xs text-muted-foreground mt-1">{entry.donationsCount} donations</p>
                     <p className="text-sm font-bold text-accent mt-1">{entry.points} pts</p>
+                    <div className="mt-2">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        <Medal className="h-3 w-3" /> Rank #{entry.rank}
+                      </span>
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -97,6 +124,7 @@ const Leaderboard = () => {
                     </div>
                     <div className="flex-1">
                       <span className="font-semibold text-sm">{entry.name}</span>
+                      {entry.shopName && <span className="text-xs text-primary ml-2">🏪 {entry.shopName}</span>}
                       {entry.badge && <span className="text-xs text-muted-foreground ml-2">{entry.badge}</span>}
                     </div>
                     <div className="text-right">
@@ -121,7 +149,7 @@ const Leaderboard = () => {
             <Gift className="h-5 w-5 text-primary" /> Rewards Program
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Earn points for every donation. Top donors get featured badges, early access to items, and platform credits. Every contribution counts!
+            Earn points for every donation. Top donors get featured badges, early access to items, and platform credits. Every contribution counts! The leaderboard auto-updates when donations are completed.
           </p>
         </motion.div>
       </main>
