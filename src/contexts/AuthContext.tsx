@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { trackActivity } from "@/lib/trackActivity";
 
 interface AuthContextType {
   user: User | null;
@@ -25,10 +26,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Track login/logout activity
+        if (event === "SIGNED_IN" && session?.user) {
+          setTimeout(() => {
+            trackActivity("login", "User signed in", {
+              provider: session.user.app_metadata?.provider || "email",
+              timestamp: new Date().toISOString(),
+            });
+          }, 0);
+        }
+        if (event === "SIGNED_OUT") {
+          // Can't track after sign out since user is null
+        }
       }
     );
 
@@ -42,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
+    await trackActivity("logout", "User signed out");
     await supabase.auth.signOut();
   };
 
