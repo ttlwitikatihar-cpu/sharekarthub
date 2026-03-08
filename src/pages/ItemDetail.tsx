@@ -34,7 +34,7 @@ const ItemDetail = () => {
       
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, rating, total_reviews, kyc_status, phone, shop_name")
+        .select("full_name, avatar_url, rating, total_reviews, kyc_status, phone, shop_name, donations_count")
         .eq("user_id", data.user_id)
         .single();
       
@@ -63,7 +63,6 @@ const ItemDetail = () => {
   const { data: sellerReviews = [] } = useQuery({
     queryKey: ["seller-reviews", item?.user_id],
     queryFn: async () => {
-      // Get all listing IDs by this seller
       const { data: sellerListings } = await supabase
         .from("listings")
         .select("id")
@@ -108,7 +107,7 @@ const ItemDetail = () => {
   }
 
   const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate" };
-  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; phone: string | null; shop_name: string | null } | null;
+  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; phone: string | null; shop_name: string | null; donations_count: number | null } | null;
   const verified = profile?.kyc_status === "verified";
   const availableQty = item.quantity ?? 0;
   const outOfStock = item.status === "out_of_stock" || availableQty <= 0;
@@ -116,6 +115,7 @@ const ItemDetail = () => {
   const contactRevealed = isOwner || hasAcceptedConversation;
   const avgRating = profile?.rating ? Number(profile.rating) : 0;
   const totalReviews = profile?.total_reviews ?? 0;
+  const isDonation = item.category === "donate";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -158,7 +158,7 @@ const ItemDetail = () => {
             </div>
 
             <div className="text-3xl font-black">
-              {item.category === "donate" ? (
+              {isDonation ? (
                 <span className="text-primary">Free</span>
               ) : (
                 <>₹{(item.price ?? 0).toLocaleString()}{item.category === "rent" && <span className="text-base font-normal text-muted-foreground">/day</span>}</>
@@ -180,23 +180,31 @@ const ItemDetail = () => {
 
             <Separator />
 
-            {/* Seller Info */}
+            {/* Seller / Donor Info */}
             {profile && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                    {profile.full_name?.charAt(0) || "?"}
+                  <div className={`h-11 w-11 rounded-full flex items-center justify-center font-bold text-sm ${isDonation ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"}`}>
+                    {isDonation ? "❤️" : (profile.full_name?.charAt(0) || "?")}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5">
-                      {profile.shop_name ? (
+                      {isDonation ? (
+                        <span className="font-semibold text-sm flex items-center gap-1 text-primary">
+                          <Heart className="h-3.5 w-3.5 fill-primary" />
+                          Donated by {profile.shop_name || profile.full_name || "Anonymous"}
+                        </span>
+                      ) : profile.shop_name ? (
                         <span className="font-semibold text-sm flex items-center gap-1"><Store className="h-3.5 w-3.5" />{profile.shop_name}</span>
                       ) : (
                         <span className="font-semibold text-sm flex items-center gap-1"><User className="h-3.5 w-3.5" />{profile.full_name || "Seller"}</span>
                       )}
                       {verified && <ShieldCheck className="h-4 w-4 text-primary" />}
                     </div>
-                    {profile.shop_name && (
+                    {isDonation && profile.donations_count && profile.donations_count > 1 && (
+                      <p className="text-xs text-muted-foreground">{profile.donations_count} donations made</p>
+                    )}
+                    {!isDonation && profile.shop_name && (
                       <p className="text-xs text-muted-foreground">{profile.full_name}</p>
                     )}
                   </div>
@@ -234,7 +242,7 @@ const ItemDetail = () => {
             {/* Seller Reviews */}
             {sellerReviews.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-semibold text-sm">Seller Reviews</h3>
+                <h3 className="font-semibold text-sm">{isDonation ? "Donor" : "Seller"} Reviews</h3>
                 <div className="space-y-2 max-h-48 overflow-auto">
                   {sellerReviews.map((r: any, i: number) => (
                     <div key={i} className="rounded-lg border border-border bg-card p-3">
@@ -307,7 +315,7 @@ const ItemDetail = () => {
                       navigate("/orders");
                     }
                   }}>
-                    {outOfStock ? "Out of Stock" : item.category === "rent" ? "Request to Rent" : item.category === "sell" ? "Buy Now" : "Request Item"}
+                    {outOfStock ? "Out of Stock" : isDonation ? "Request Item" : item.category === "rent" ? "Request to Rent" : "Buy Now"}
                   </Button>
                   <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
                     if (!user) { navigate("/auth"); return; }

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Clock, IndianRupee, Gift, Wrench, Star, Store, User } from "lucide-react";
+import { MapPin, Clock, IndianRupee, Gift, Wrench, Star, Store, User, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
   const CatIcon = cat.icon;
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
   const listingType = (item as any).listing_type as string | undefined;
+  const isDonation = item.category === "donate";
 
   const { data: sellerProfile } = useQuery({
     queryKey: ["seller-profile", item.user_id],
@@ -70,10 +71,17 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
       <div className="p-4 space-y-2">
         <h3 className="font-semibold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
 
-        {/* Seller / Shop info */}
+        {/* Seller / Shop / Donor info */}
         {sellerProfile && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {sellerProfile.shop_name ? (
+            {isDonation ? (
+              <>
+                <Heart className="h-3 w-3 shrink-0 text-primary fill-primary" />
+                <span className="truncate text-primary font-medium">
+                  Donated by {sellerProfile.shop_name || sellerProfile.full_name || "Anonymous"}
+                </span>
+              </>
+            ) : sellerProfile.shop_name ? (
               <>
                 <Store className="h-3 w-3 shrink-0" />
                 <span className="truncate">{sellerProfile.shop_name}</span>

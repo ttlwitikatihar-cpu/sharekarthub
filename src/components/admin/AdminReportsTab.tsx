@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Flag, CheckCircle, XCircle, Eye, ChevronDown, ChevronUp, User } from "lucide-react";
+import { Flag, CheckCircle, XCircle, Eye, ChevronDown, ChevronUp, User, Ban, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
   const [expandedReport, setExpandedReport] = useState<string | null>(null);
   const [resolveDialog, setResolveDialog] = useState<{ id: string; status: string } | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
+  const [suspendDialog, setSuspendDialog] = useState<{ userId: string; name: string; reportId: string } | null>(null);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["admin-reports"],
@@ -63,6 +64,16 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
     enabled: !!expandedItem?.reported_listing_id,
   });
 
+  // Fetch reported user's activity
+  const { data: reportedUserActivity = [] } = useQuery({
+    queryKey: ["admin-reported-user-activity", expandedItem?.reported_user_id],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("user_activity").select("action, details, created_at").eq("user_id", expandedItem!.reported_user_id).order("created_at", { ascending: false }).limit(10);
+      return data || [];
+    },
+    enabled: !!expandedItem?.reported_user_id,
+  });
+
   const resolveReport = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
       const { error } = await (supabase as any).from("reports").update({
@@ -79,6 +90,23 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
       toast({ title: `Report ${vars.status}` });
       setResolveDialog(null);
       setAdminNotes("");
+    },
+  });
+
+  // Suspend reported user directly from report
+  const suspendFromReport = useMutation({
+    mutationFn: async ({ userId: targetId, reportId }: { userId: string; reportId: string }) => {
+      await supabase.from("listings").update({ status: "suspended" }).eq("user_id", targetId);
+      await supabase.from("profiles").update({ kyc_status: "banned", bio: "[Suspended due to report]" }).eq("user_id", targetId);
+      await (supabase as any).from("reports").update({ status: "resolved", admin_notes: "User suspended", resolved_by: userId, resolved_at: new Date().toISOString() }).eq("id", reportId);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+      logAction("suspend_from_report", "user", vars.userId, "User suspended from report");
+      toast({ title: "User suspended", description: "Account banned and listings suspended." });
+      setSuspendDialog(null);
     },
   });
 
@@ -99,6 +127,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
           <p className="text-center py-10 text-muted-foreground">No reports found</p>
         ) : filtered.map((r: any) => {
           const isExpanded = expandedReport === r.id;
+          const reportedProfile = getProfile(r.reported_user_id);
           return (
             <div key={r.id} className="border-b border-border last:border-b-0">
               <div
@@ -110,6 +139,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm">
                       {r.reported_listing_id ? "Reported Listing" : "Reported User"}
+                      {r.reported_user_id && <span className="text-muted-foreground font-normal"> — {getName(r.reported_user_id)}</span>}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       By: {getName(r.reported_by)} · {new Date(r.created_at).toLocaleDateString()}
@@ -119,7 +149,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
                   <Badge variant={r.status === "resolved" ? "default" : r.status === "dismissed" ? "secondary" : "destructive"} className="text-xs shrink-0">
                     {r.status}
                   </Badge>
-                  <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  <div className="flex gap-1 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
                     {r.reported_listing_id && (
                       <Button size="icon" variant="ghost" onClick={() => navigate(`/item/${r.reported_listing_id}`)} title="View Listing">
                         <Eye className="h-4 w-4" />
@@ -133,6 +163,11 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
                         <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setResolveDialog({ id: r.id, status: "dismissed" }); setAdminNotes(""); }}>
                           <XCircle className="h-3.5 w-3.5" /> Dismiss
                         </Button>
+                        {r.reported_user_id && reportedProfile?.kyc_status !== "banned" && (
+                          <Button size="sm" variant="outline" className="text-xs gap-1 text-destructive" onClick={() => setSuspendDialog({ userId: r.reported_user_id, name: getName(r.reported_user_id), reportId: r.id })}>
+                            <Ban className="h-3.5 w-3.5" /> Suspend User
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>
@@ -166,6 +201,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
                           <div className="text-xs space-y-1 text-muted-foreground">
                             <p><strong className="text-foreground">Name:</strong> {getName(r.reported_by)}</p>
                             <p><strong className="text-foreground">KYC:</strong> {getProfile(r.reported_by)?.kyc_status || "—"}</p>
+                            <p><strong className="text-foreground">Phone:</strong> {getProfile(r.reported_by)?.phone || "—"}</p>
                           </div>
                         </div>
                       )}
@@ -174,8 +210,24 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
                           <h5 className="text-xs font-semibold mb-2 flex items-center gap-1"><User className="h-3.5 w-3.5" /> Reported User</h5>
                           <div className="text-xs space-y-1 text-muted-foreground">
                             <p><strong className="text-foreground">Name:</strong> {getName(r.reported_user_id)}</p>
+                            {getProfile(r.reported_user_id)?.shop_name && <p><strong className="text-foreground">Shop:</strong> {getProfile(r.reported_user_id)?.shop_name}</p>}
                             <p><strong className="text-foreground">KYC:</strong> {getProfile(r.reported_user_id)?.kyc_status || "—"}</p>
+                            <p><strong className="text-foreground">Phone:</strong> {getProfile(r.reported_user_id)?.phone || "—"}</p>
                           </div>
+                          {/* Reported user's recent activity */}
+                          {reportedUserActivity.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <h6 className="text-[10px] font-semibold mb-1.5">Recent Activity</h6>
+                              <div className="space-y-1 max-h-20 overflow-auto">
+                                {reportedUserActivity.map((a: any, i: number) => (
+                                  <div key={i} className="text-[10px] flex gap-1.5">
+                                    <span className="text-muted-foreground shrink-0">{new Date(a.created_at).toLocaleDateString()}</span>
+                                    <span className="text-primary font-medium">{a.action}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                       {reportedListing && (
@@ -186,6 +238,15 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
                             <p><strong className="text-foreground">Category:</strong> {reportedListing.category}</p>
                             <p><strong className="text-foreground">Status:</strong> {reportedListing.status}</p>
                             <p><strong className="text-foreground">Price:</strong> ₹{reportedListing.price ?? 0}</p>
+                            <p><strong className="text-foreground">Quantity:</strong> {reportedListing.quantity}</p>
+                            <p><strong className="text-foreground">Location:</strong> {reportedListing.location || "—"}</p>
+                            {reportedListing.images?.length > 0 && (
+                              <div className="flex gap-1 mt-1">
+                                {reportedListing.images.slice(0, 3).map((img: string, i: number) => (
+                                  <img key={i} src={img} alt="" className="h-12 w-12 rounded object-cover border border-border" />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -198,6 +259,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
         })}
       </div>
 
+      {/* Resolve/Dismiss Dialog */}
       <Dialog open={!!resolveDialog} onOpenChange={() => setResolveDialog(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>{resolveDialog?.status === "resolved" ? "Resolve" : "Dismiss"} Report</DialogTitle></DialogHeader>
@@ -206,6 +268,20 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
             <Button variant="outline" onClick={() => setResolveDialog(null)}>Cancel</Button>
             <Button onClick={() => resolveDialog && resolveReport.mutate({ id: resolveDialog.id, status: resolveDialog.status, notes: adminNotes })}>
               Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Suspend from Report Dialog */}
+      <Dialog open={!!suspendDialog} onOpenChange={() => setSuspendDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>🚨 Suspend "{suspendDialog?.name}"?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">This will ban the user, suspend all their listings, and resolve this report.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSuspendDialog(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => suspendDialog && suspendFromReport.mutate({ userId: suspendDialog.userId, reportId: suspendDialog.reportId })}>
+              Suspend User
             </Button>
           </DialogFooter>
         </DialogContent>
