@@ -17,7 +17,7 @@ const Footer = () => (
           </p>
         </div>
         <div>
-          <h4 className="font-semibold text-sm mb-3">Marketplace</h4>
+          <h2 className="font-semibold text-sm mb-3">Marketplace</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><Link to="/" className="hover:text-primary transition-colors">Browse Items</Link></li>
             <li><Link to="/list-item" className="hover:text-primary transition-colors">List an Item</Link></li>
@@ -25,7 +25,7 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-          <h4 className="font-semibold text-sm mb-3">Trust & Safety</h4>
+          <h2 className="font-semibold text-sm mb-3">Trust & Safety</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><span className="cursor-pointer hover:text-primary transition-colors">KYC Verification</span></li>
             <li><span className="cursor-pointer hover:text-primary transition-colors">Escrow Protection</span></li>
@@ -33,7 +33,7 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-          <h4 className="font-semibold text-sm mb-3">Company</h4>
+          <h2 className="font-semibold text-sm mb-3">Company</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><span className="cursor-pointer hover:text-primary transition-colors">About Us</span></li>
             <li><span className="cursor-pointer hover:text-primary transition-colors">Privacy Policy</span></li>

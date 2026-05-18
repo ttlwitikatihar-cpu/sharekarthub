@@ -185,7 +185,7 @@ const ListItem = () => {
               <Label>Location</Label>
               <div className="flex gap-2">
                 <Input placeholder="e.g. Mumbai, MH" value={location} onChange={(e) => setLocation(e.target.value)} required className="flex-1" />
-                <Button type="button" variant="outline" size="icon" onClick={requestLocation} disabled={geoLoading} title="Use my live location">
+                <Button type="button" variant="outline" size="icon" onClick={requestLocation} disabled={geoLoading} aria-label="Use my live location">
                   <Navigation className={`h-4 w-4 ${position ? "text-primary" : "text-muted-foreground"}`} />
                 </Button>
               </div>
@@ -235,7 +235,7 @@ const ListItem = () => {
                   {imagePreviews.map((src, i) => (
                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
                       <img src={src} alt="" className="h-full w-full object-cover" />
-                      <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5">
+                      <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5" aria-label="Remove image">
                         <X className="h-3 w-3" />
                       </button>
                     </div>

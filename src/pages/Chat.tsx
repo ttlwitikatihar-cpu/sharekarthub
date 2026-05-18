@@ -187,8 +187,9 @@ const Chat = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type a message..."
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                    aria-label="Message input"
                   />
-                  <Button size="icon" onClick={sendMessage} disabled={sending || !message.trim()}>
+                  <Button size="icon" onClick={sendMessage} disabled={sending || !message.trim()} aria-label="Send message">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

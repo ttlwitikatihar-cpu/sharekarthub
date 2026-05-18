@@ -94,10 +94,10 @@ const Auth = () => {
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
           <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-2 font-bold text-xl mb-2">
+            <h1 className="flex items-center justify-center gap-2 font-bold text-xl mb-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-black">S</span>
               ShareKart
-            </div>
+            </h1>
             <p className="text-sm text-muted-foreground">Join the community</p>
           </div>
 

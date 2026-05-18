@@ -122,15 +122,15 @@ const Index = () => {
           >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" aria-label="Search items" />
             </div>
             <div className="relative flex-1 sm:max-w-[180px]">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="pl-9" />
+              <Input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="pl-9" aria-label="Location" />
             </div>
             <div className="relative flex-1 sm:max-w-[180px]">
               <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Shop name" value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Shop name" value={shopSearch} onChange={(e) => setShopSearch(e.target.value)} className="pl-9" aria-label="Shop name" />
             </div>
             <Button
               variant="outline"
@@ -138,7 +138,7 @@ const Index = () => {
               className="shrink-0"
               onClick={() => { requestLocation(); setSortBy("nearest"); }}
               disabled={geoLoading}
-              title="Use my live location"
+              aria-label="Use my live location"
             >
               <Navigation className={`h-4 w-4 ${position ? "text-primary" : "text-muted-foreground"}`} />
             </Button>
