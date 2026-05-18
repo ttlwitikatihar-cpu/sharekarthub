@@ -62,7 +62,7 @@ const ResetPassword = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md text-center">
           <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
-            <h2 className="text-xl font-bold mb-2">Invalid Reset Link</h2>
+            <h1 className="text-xl font-bold mb-2">Invalid Reset Link</h1>
             <p className="text-sm text-muted-foreground mb-4">This link is invalid or has expired. Please request a new password reset.</p>
             <Link to="/auth">
               <Button variant="outline" className="gap-2">
@@ -83,7 +83,7 @@ const ResetPassword = () => {
         </Link>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
-          <h2 className="text-xl font-bold text-center mb-1">Set New Password</h2>
+          <h1 className="text-xl font-bold text-center mb-1">Set New Password</h1>
           <p className="text-sm text-muted-foreground text-center mb-6">Enter your new password below.</p>
 
           <form onSubmit={handleReset} className="space-y-4">
