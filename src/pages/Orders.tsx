@@ -261,7 +261,7 @@ const Orders = () => {
                       <span className="text-muted-foreground">Order ID</span>
                       <div className="flex items-center gap-1 font-mono font-medium">
                         <span className="truncate max-w-[100px]">{order.id.slice(0, 8)}...</span>
-                        <button onClick={() => copyToClipboard(order.id)} className="text-muted-foreground hover:text-primary">
+                        <button onClick={() => copyToClipboard(order.id)} className="text-muted-foreground hover:text-primary" aria-label="Copy order ID">
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
@@ -339,6 +339,7 @@ const Orders = () => {
                             value={otpInputs[`handover-${order.id}`] || ""}
                             onChange={(e) => setOtpInputs({ ...otpInputs, [`handover-${order.id}`]: e.target.value })}
                             className="max-w-[180px]"
+                            aria-label="Handover OTP"
                           />
                           <Button size="sm" onClick={() => verifyHandoverOTP(order.id)}>Verify</Button>
                         </div>
@@ -370,6 +371,7 @@ const Orders = () => {
                             value={otpInputs[`return-${order.id}`] || ""}
                             onChange={(e) => setOtpInputs({ ...otpInputs, [`return-${order.id}`]: e.target.value })}
                             className="max-w-[180px]"
+                            aria-label="Return OTP"
                           />
                           <Button size="sm" onClick={() => verifyReturnOTP(order.id)}>Verify</Button>
                         </div>
