@@ -12,3 +12,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /orders
+Disallow: /chat
+Disallow: /my-listings
+Disallow: /edit-listing
+Disallow: /reset-password
+
+Sitemap: https://lend-give-get.lovable.app/sitemap.xml

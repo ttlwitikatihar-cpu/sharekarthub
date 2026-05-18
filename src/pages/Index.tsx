@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
+import SEO from "@/components/SEO";
 
 type ListingCategory = "rent" | "sell" | "donate";
 
@@ -92,6 +93,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title="ShareKart — Rent, Sell, and Donate Locally"
+        description="Browse items to rent, buy, or claim free from verified neighbors. Local marketplace with escrow protection."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "ShareKart",
+          url: "https://lend-give-get.lovable.app/",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://lend-give-get.lovable.app/?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
       <Navbar />
 
       {/* Hero */}

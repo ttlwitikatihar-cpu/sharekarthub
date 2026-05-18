@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReportDialog from "@/components/ReportDialog";
 import { trackActivity } from "@/lib/trackActivity";
+import SEO from "@/components/SEO";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -117,8 +118,31 @@ const ItemDetail = () => {
   const totalReviews = profile?.total_reviews ?? 0;
   const isDonation = item.category === "donate";
 
+  const shortDesc = (item.description || `${categoryLabels[item.category] || item.category} on ShareKart.`).slice(0, 155);
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: item.title,
+    description: shortDesc,
+    image: item.images || undefined,
+    offers: !isDonation && item.price ? {
+      "@type": "Offer",
+      price: item.price,
+      priceCurrency: "INR",
+      availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    } : undefined,
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title={`${item.title} — ${categoryLabels[item.category] || "ShareKart"}`}
+        description={shortDesc}
+        path={`/item/${item.id}`}
+        type="product"
+        image={item.images?.[0]}
+        jsonLd={productLd}
+      />
       <Navbar />
       <main className="container flex-1 py-6">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">

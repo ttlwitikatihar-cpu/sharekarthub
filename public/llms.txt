@@ -1,0 +1,11 @@
+# ShareKart
+
+> A trusted local marketplace to rent, sell, or donate products and services with verified users and escrow protection.
+
+ShareKart connects people in the same community to share items — list things to rent out, sell, or donate, and discover what neighbors are offering. Built-in KYC verification, OTP-based handover, and a donor leaderboard help build trust.
+
+## Pages
+
+- [Browse Marketplace](/): Discover items available to rent, buy, or claim for free near you.
+- [List an Item](/list-item): Publish a product or service for rent, sale, or donation.
+- [Donor Leaderboard](/leaderboard): Top community donors ranked by contributions.
