@@ -174,7 +174,7 @@ const ItemDetail = () => {
             <Separator />
 
             <div>
-              <h3 className="font-semibold mb-2">Description</h3>
+              <h2 className="font-semibold mb-2">Description</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">{item.description || "No description provided."}</p>
             </div>
 
@@ -242,7 +242,7 @@ const ItemDetail = () => {
             {/* Seller Reviews */}
             {sellerReviews.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-semibold text-sm">{isDonation ? "Donor" : "Seller"} Reviews</h3>
+                <h2 className="font-semibold text-sm">{isDonation ? "Donor" : "Seller"} Reviews</h2>
                 <div className="space-y-2 max-h-48 overflow-auto">
                   {sellerReviews.map((r: any, i: number) => (
                     <div key={i} className="rounded-lg border border-border bg-card p-3">
@@ -264,7 +264,7 @@ const ItemDetail = () => {
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">Quantity:</span>
                 <div className="flex items-center gap-1 border border-border rounded-lg">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOrderQty(Math.max(1, orderQty - 1))} disabled={orderQty <= 1}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOrderQty(Math.max(1, orderQty - 1))} disabled={orderQty <= 1} aria-label="Decrease quantity">
                     <Minus className="h-4 w-4" />
                   </Button>
                   <Input
@@ -274,8 +274,9 @@ const ItemDetail = () => {
                     value={orderQty}
                     onChange={(e) => setOrderQty(Math.min(availableQty, Math.max(1, Number(e.target.value) || 1)))}
                     className="w-14 text-center border-0 h-8 p-0"
+                    aria-label="Quantity"
                   />
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOrderQty(Math.min(availableQty, orderQty + 1))} disabled={orderQty >= availableQty}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOrderQty(Math.min(availableQty, orderQty + 1))} disabled={orderQty >= availableQty} aria-label="Increase quantity">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -340,8 +341,8 @@ const ItemDetail = () => {
                   </Button>
                 </>
               )}
-              <Button variant="ghost" size="icon"><Heart className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon"><Share2 className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Add to favorites"><Heart className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Share item"><Share2 className="h-5 w-5" /></Button>
               {!isOwner && user && <ReportDialog reportedListingId={item.id} reportedUserId={item.user_id} triggerVariant="icon" />}
             </div>
           </motion.div>
