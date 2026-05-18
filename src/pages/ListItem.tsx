@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { useQuery } from "@tanstack/react-query";
+import SEO from "@/components/SEO";
 
 const ListItem = () => {
   const navigate = useNavigate();
@@ -123,6 +124,11 @@ const ListItem = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title="List an Item — ShareKart"
+        description="Publish a product or service on ShareKart to rent, sell, or donate to your local community."
+        path="/list-item"
+      />
       <Navbar />
       <main className="container flex-1 py-8 max-w-2xl">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">

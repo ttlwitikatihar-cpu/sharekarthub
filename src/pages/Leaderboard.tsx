@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import SEO from "@/components/SEO";
 
 const getBadge = (rank: number) => {
   if (rank === 1) return "🏆";
@@ -59,6 +60,11 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title="Donor Leaderboard — Top Community Givers on ShareKart"
+        description="See the top donors ranked by contributions to the ShareKart community. Celebrate generous neighbors making sharing possible."
+        path="/leaderboard"
+      />
       <Navbar />
       <main className="container flex-1 py-8 max-w-3xl">
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
