@@ -165,6 +165,7 @@ const EditListing = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Edit Listing — ShareKart" description="Update your ShareKart listing details, photos, price, and availability." path={`/edit-listing/${id ?? ""}`} noindex />
       <Navbar />
       <main className="container flex-1 py-8 max-w-2xl">
         <Link to={`/item/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">
