@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 
 const MyListings = () => {
   const { user } = useAuth();
@@ -119,6 +120,7 @@ const MyListings = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="My Listings — Manage Items on ShareKart" description="View and manage everything you've listed for rent, sale, or donation on ShareKart." path="/my-listings" noindex />
       <Navbar />
       <main className="container flex-1 py-6 max-w-3xl">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">

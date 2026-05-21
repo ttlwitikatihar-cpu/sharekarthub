@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -149,6 +150,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="My Profile — ShareKart Account Settings" description="Manage your ShareKart profile, shop details, KYC verification, and contact information." path="/profile" noindex />
       <Navbar />
       <main className="container flex-1 py-8 max-w-2xl">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors">

@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 
 interface Conversation {
   id: string;
@@ -129,6 +130,7 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Messages — ShareKart Chat" description="Coordinate with buyers and sellers in real time about your ShareKart listings, rentals, and donations." path="/chat" noindex />
       <Navbar />
       <main className="container flex-1 py-6">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">

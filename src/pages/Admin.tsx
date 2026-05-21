@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -117,6 +118,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Admin Console — ShareKart Moderation" description="Moderate users, listings, orders, and reports across the ShareKart marketplace." path="/admin" noindex />
       <Navbar />
       <SidebarProvider>
         <div className="flex-1 flex w-full">
