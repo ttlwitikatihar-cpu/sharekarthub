@@ -482,6 +482,20 @@ const Orders = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {reviewOrder && user && (
+        <ReviewDialog
+          open={!!reviewOrder}
+          onOpenChange={(o) => !o && setReviewOrder(null)}
+          listingId={reviewOrder.listing_id}
+          listingTitle={reviewOrder.listing?.title || "this item"}
+          reviewerId={user.id}
+          onSubmitted={() => {
+            queryClient.invalidateQueries({ queryKey: ["my-reviews", user.id] });
+            setReviewOrder(null);
+          }}
+        />
+      )}
     </div>
   );
 };
