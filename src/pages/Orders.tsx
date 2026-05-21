@@ -399,8 +399,21 @@ const Orders = () => {
                   )}
 
                   {order.status === "completed" && (
-                    <div className="flex items-center gap-1 text-sm text-primary">
-                      <CheckCircle className="h-4 w-4" /> Order completed
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1 text-sm text-primary">
+                        <CheckCircle className="h-4 w-4" /> Order completed
+                      </div>
+                      {isBuyer && order.listing_id && (
+                        reviewedListingIds.has(order.listing_id) ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> Review submitted
+                          </span>
+                        ) : (
+                          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setReviewOrder(order)}>
+                            <Star className="h-3.5 w-3.5" /> Leave Review
+                          </Button>
+                        )
+                      )}
                     </div>
                   )}
 
