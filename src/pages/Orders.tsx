@@ -180,6 +180,7 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="My Orders — ShareKart" description="Track your ShareKart rentals, purchases, and donations. Confirm handovers and returns securely with OTP verification." path="/orders" noindex />
       <Navbar />
       <main className="container flex-1 py-6 max-w-3xl">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
