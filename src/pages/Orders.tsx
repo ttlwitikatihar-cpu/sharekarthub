@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter } from "lucide-react";
+import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter, Star } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import ReviewDialog from "@/components/ReviewDialog";
 
 const OTP_EXPIRY_HOURS = 48;
 
@@ -45,6 +46,17 @@ const Orders = () => {
   const [repostPrice, setRepostPrice] = useState("");
   const [repostDeposit, setRepostDeposit] = useState("");
   const [repostDescription, setRepostDescription] = useState("");
+  const [reviewOrder, setReviewOrder] = useState<any>(null);
+
+  const { data: myReviews = [] } = useQuery({
+    queryKey: ["my-reviews", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("listing_id").eq("reviewer_id", user!.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+  const reviewedListingIds = new Set(myReviews.map((r: any) => r.listing_id));
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders"],
@@ -387,8 +399,21 @@ const Orders = () => {
                   )}
 
                   {order.status === "completed" && (
-                    <div className="flex items-center gap-1 text-sm text-primary">
-                      <CheckCircle className="h-4 w-4" /> Order completed
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1 text-sm text-primary">
+                        <CheckCircle className="h-4 w-4" /> Order completed
+                      </div>
+                      {isBuyer && order.listing_id && (
+                        reviewedListingIds.has(order.listing_id) ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> Review submitted
+                          </span>
+                        ) : (
+                          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setReviewOrder(order)}>
+                            <Star className="h-3.5 w-3.5" /> Leave Review
+                          </Button>
+                        )
+                      )}
                     </div>
                   )}
 
@@ -457,6 +482,20 @@ const Orders = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {reviewOrder && user && (
+        <ReviewDialog
+          open={!!reviewOrder}
+          onOpenChange={(o) => !o && setReviewOrder(null)}
+          listingId={reviewOrder.listing_id}
+          listingTitle={reviewOrder.listing?.title || "this item"}
+          reviewerId={user.id}
+          onSubmitted={() => {
+            queryClient.invalidateQueries({ queryKey: ["my-reviews", user.id] });
+            setReviewOrder(null);
+          }}
+        />
+      )}
     </div>
   );
 };
