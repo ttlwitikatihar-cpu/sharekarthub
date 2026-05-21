@@ -46,6 +46,17 @@ const Orders = () => {
   const [repostPrice, setRepostPrice] = useState("");
   const [repostDeposit, setRepostDeposit] = useState("");
   const [repostDescription, setRepostDescription] = useState("");
+  const [reviewOrder, setReviewOrder] = useState<any>(null);
+
+  const { data: myReviews = [] } = useQuery({
+    queryKey: ["my-reviews", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("listing_id").eq("reviewer_id", user!.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+  const reviewedListingIds = new Set(myReviews.map((r: any) => r.listing_id));
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders"],
