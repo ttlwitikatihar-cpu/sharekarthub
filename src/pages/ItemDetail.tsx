@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ReportDialog from "@/components/ReportDialog";
 import { trackActivity } from "@/lib/trackActivity";
 import SEO from "@/components/SEO";
+import { useWishlist, shareItem } from "@/lib/wishlist";
+import { calculatePricing, formatINR } from "@/lib/pricing";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -22,6 +24,7 @@ const ItemDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orderQty, setOrderQty] = useState(1);
+  const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["listing", id],
@@ -308,6 +311,43 @@ const ItemDetail = () => {
               </div>
             )}
 
+            {/* Pricing breakdown */}
+            {!isDonation && !isOwner && (item.price ?? 0) > 0 && (() => {
+              const p = calculatePricing({
+                category: item.category,
+                price: item.price ?? 0,
+                quantity: orderQty,
+                securityDeposit: item.security_deposit ?? 0,
+              });
+              return (
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-sm">
+                  <h3 className="font-semibold mb-1">Payment Summary</h3>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal ({orderQty} × {formatINR(item.price ?? 0)})</span>
+                    <span className="text-foreground">{formatINR(p.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Platform commission ({Math.round(p.commissionRate * 100)}%)</span>
+                    <span className="text-foreground">{formatINR(p.commission)}</span>
+                  </div>
+                  {p.refundableDeposit > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Security deposit (refundable)</span>
+                      <span className="text-foreground">{formatINR(p.refundableDeposit)}</span>
+                    </div>
+                  )}
+                  <Separator className="my-1" />
+                  <div className="flex justify-between font-semibold">
+                    <span>You pay now</span>
+                    <span>{formatINR(p.buyerPays)}</span>
+                  </div>
+                  {p.refundOnReturn > 0 && (
+                    <p className="text-xs text-primary">Refund of {formatINR(p.refundOnReturn)} on successful return.</p>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="flex gap-3 pt-2 flex-wrap">
               {isOwner && (
                 <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate(`/edit-listing/${item.id}`)}>
@@ -365,8 +405,33 @@ const ItemDetail = () => {
                   </Button>
                 </>
               )}
-              <Button variant="ghost" size="icon" aria-label="Add to favorites"><Heart className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon" aria-label="Share item"><Share2 className="h-5 w-5" /></Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={isWishlisted(item.id) ? "Remove from wishlist" : "Add to wishlist"}
+                onClick={() => {
+                  const added = toggleWishlist(item.id);
+                  toast({ title: added ? "Added to wishlist" : "Removed from wishlist" });
+                }}
+              >
+                <Heart className={`h-5 w-5 ${isWishlisted(item.id) ? "fill-primary text-primary" : ""}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Share item"
+                onClick={async () => {
+                  const result = await shareItem({
+                    title: item.title,
+                    text: shortDesc,
+                    url: `${window.location.origin}/item/${item.id}`,
+                  });
+                  if (result === "copied") toast({ title: "Link copied to clipboard" });
+                  else if (result === "failed") toast({ title: "Could not share", variant: "destructive" });
+                }}
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
               {!isOwner && user && <ReportDialog reportedListingId={item.id} reportedUserId={item.user_id} triggerVariant="icon" />}
             </div>
           </motion.div>

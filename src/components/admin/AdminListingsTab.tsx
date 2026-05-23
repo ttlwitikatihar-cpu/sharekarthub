@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Ban, CheckCircle, Trash2, Search, ChevronDown, ChevronUp, Star, ShoppingCart } from "lucide-react";
+import { Eye, Ban, CheckCircle, Trash2, Search, ChevronDown, ChevronUp, Star, ShoppingCart, Pencil, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
 interface AdminListingsTabProps {
@@ -21,6 +22,8 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
   const [filter, setFilter] = useState("all");
   const [expandedListing, setExpandedListing] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
+  const [warnTarget, setWarnTarget] = useState<{ id: string; title: string; user_id: string } | null>(null);
+  const [warnReason, setWarnReason] = useState("");
 
   // Fetch seller profile for expanded listing
   const expandedItem = listings.find(l => l.id === expandedListing);
@@ -78,6 +81,25 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
     },
   });
 
+  const sendWarning = useMutation({
+    mutationFn: async ({ listing, reason }: { listing: { id: string; title: string; user_id: string }; reason: string }) => {
+      const { error } = await (supabase as any).from("notifications").insert({
+        user_id: listing.user_id,
+        title: "⚠️ Warning from ShareKart",
+        message: `Your listing "${listing.title}" has been flagged: ${reason}. Please review our guidelines or your listing may be removed.`,
+        type: "warning",
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      logAction("warn_seller", "listing", vars.listing.id, `Warned seller: ${vars.reason}`);
+      toast({ title: "Warning sent to seller" });
+      setWarnTarget(null);
+      setWarnReason("");
+    },
+    onError: (e: any) => toast({ title: "Failed to send warning", description: e.message, variant: "destructive" }),
+  });
+
   const filtered = listings.filter(l => {
     if (filter !== "all" && l.status !== filter && l.category !== filter) return false;
     if (search && !l.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -118,6 +140,12 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
                 <Badge variant={l.status === "active" ? "default" : "secondary"} className="text-xs shrink-0">{l.status}</Badge>
                 <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                   <Button size="icon" variant="ghost" onClick={() => navigate(`/item/${l.id}`)} title="View"><Eye className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => navigate(`/edit-listing/${l.id}`)} title="Edit listing">
+                    <Pencil className="h-4 w-4 text-primary" />
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => setWarnTarget({ id: l.id, title: l.title, user_id: l.user_id })} title="Warn seller">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  </Button>
                   {l.status === "active" ? (
                     <Button size="icon" variant="ghost" onClick={() => updateStatus.mutate({ id: l.id, status: "suspended" })} title="Suspend">
                       <Ban className="h-4 w-4 text-orange-500" />
@@ -222,6 +250,30 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => confirmDelete && deleteListing.mutate(confirmDelete.id)}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!warnTarget} onOpenChange={() => { setWarnTarget(null); setWarnReason(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Warn seller about "{warnTarget?.title}"</DialogTitle>
+            <DialogDescription>Send a private notification explaining the issue. The seller will see it in their notifications.</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Reason for warning (e.g. misleading description, wrong images, prohibited item)..."
+            value={warnReason}
+            onChange={(e) => setWarnReason(e.target.value)}
+            rows={4}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setWarnTarget(null); setWarnReason(""); }}>Cancel</Button>
+            <Button
+              onClick={() => warnTarget && sendWarning.mutate({ listing: warnTarget, reason: warnReason.trim() })}
+              disabled={!warnReason.trim() || sendWarning.isPending}
+            >
+              {sendWarning.isPending ? "Sending..." : "Send Warning"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
