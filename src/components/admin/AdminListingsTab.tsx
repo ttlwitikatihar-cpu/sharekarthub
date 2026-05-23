@@ -140,6 +140,12 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
                 <Badge variant={l.status === "active" ? "default" : "secondary"} className="text-xs shrink-0">{l.status}</Badge>
                 <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                   <Button size="icon" variant="ghost" onClick={() => navigate(`/item/${l.id}`)} title="View"><Eye className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => navigate(`/edit-listing/${l.id}`)} title="Edit listing">
+                    <Pencil className="h-4 w-4 text-primary" />
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => setWarnTarget({ id: l.id, title: l.title, user_id: l.user_id })} title="Warn seller">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  </Button>
                   {l.status === "active" ? (
                     <Button size="icon" variant="ghost" onClick={() => updateStatus.mutate({ id: l.id, status: "suspended" })} title="Suspend">
                       <Ban className="h-4 w-4 text-orange-500" />
