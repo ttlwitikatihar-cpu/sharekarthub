@@ -16,6 +16,12 @@ import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import MyListings from "./pages/MyListings";
 import Admin from "./pages/Admin";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import KYC from "./pages/trust/KYC";
+import Escrow from "./pages/trust/Escrow";
+import Disputes from "./pages/trust/Disputes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
