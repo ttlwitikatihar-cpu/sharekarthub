@@ -27,17 +27,17 @@ const Footer = () => (
         <div>
           <h2 className="font-semibold text-sm mb-3">Trust & Safety</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><span className="cursor-pointer hover:text-primary transition-colors">KYC Verification</span></li>
-            <li><span className="cursor-pointer hover:text-primary transition-colors">Escrow Protection</span></li>
-            <li><span className="cursor-pointer hover:text-primary transition-colors">Dispute Resolution</span></li>
+            <li><Link to="/trust/kyc" className="hover:text-primary transition-colors">KYC Verification</Link></li>
+            <li><Link to="/trust/escrow" className="hover:text-primary transition-colors">Escrow Protection</Link></li>
+            <li><Link to="/trust/disputes" className="hover:text-primary transition-colors">Dispute Resolution</Link></li>
           </ul>
         </div>
         <div>
           <h2 className="font-semibold text-sm mb-3">Company</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><span className="cursor-pointer hover:text-primary transition-colors">About Us</span></li>
-            <li><span className="cursor-pointer hover:text-primary transition-colors">Privacy Policy</span></li>
-            <li><span className="cursor-pointer hover:text-primary transition-colors">Terms of Service</span></li>
+            <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+            <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+            <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
           </ul>
         </div>
       </div>

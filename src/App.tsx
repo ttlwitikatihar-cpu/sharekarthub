@@ -16,6 +16,12 @@ import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import MyListings from "./pages/MyListings";
 import Admin from "./pages/Admin";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import KYC from "./pages/trust/KYC";
+import Escrow from "./pages/trust/Escrow";
+import Disputes from "./pages/trust/Disputes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +46,12 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/trust/kyc" element={<KYC />} />
+            <Route path="/trust/escrow" element={<Escrow />} />
+            <Route path="/trust/disputes" element={<Disputes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
