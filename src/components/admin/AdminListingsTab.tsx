@@ -22,6 +22,8 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
   const [filter, setFilter] = useState("all");
   const [expandedListing, setExpandedListing] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
+  const [warnTarget, setWarnTarget] = useState<{ id: string; title: string; user_id: string } | null>(null);
+  const [warnReason, setWarnReason] = useState("");
 
   // Fetch seller profile for expanded listing
   const expandedItem = listings.find(l => l.id === expandedListing);
