@@ -81,6 +81,25 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
     },
   });
 
+  const sendWarning = useMutation({
+    mutationFn: async ({ listing, reason }: { listing: { id: string; title: string; user_id: string }; reason: string }) => {
+      const { error } = await (supabase as any).from("notifications").insert({
+        user_id: listing.user_id,
+        title: "⚠️ Warning from ShareKart",
+        message: `Your listing "${listing.title}" has been flagged: ${reason}. Please review our guidelines or your listing may be removed.`,
+        type: "warning",
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      logAction("warn_seller", "listing", vars.listing.id, `Warned seller: ${vars.reason}`);
+      toast({ title: "Warning sent to seller" });
+      setWarnTarget(null);
+      setWarnReason("");
+    },
+    onError: (e: any) => toast({ title: "Failed to send warning", description: e.message, variant: "destructive" }),
+  });
+
   const filtered = listings.filter(l => {
     if (filter !== "all" && l.status !== filter && l.category !== filter) return false;
     if (search && !l.title.toLowerCase().includes(search.toLowerCase())) return false;
