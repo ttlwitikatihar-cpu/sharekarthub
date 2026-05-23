@@ -24,6 +24,7 @@ const ItemDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orderQty, setOrderQty] = useState(1);
+  const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["listing", id],
