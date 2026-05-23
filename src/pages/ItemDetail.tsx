@@ -311,6 +311,43 @@ const ItemDetail = () => {
               </div>
             )}
 
+            {/* Pricing breakdown */}
+            {!isDonation && !isOwner && (item.price ?? 0) > 0 && (() => {
+              const p = calculatePricing({
+                category: item.category,
+                price: item.price ?? 0,
+                quantity: orderQty,
+                securityDeposit: item.security_deposit ?? 0,
+              });
+              return (
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-sm">
+                  <h3 className="font-semibold mb-1">Payment Summary</h3>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal ({orderQty} × {formatINR(item.price ?? 0)})</span>
+                    <span className="text-foreground">{formatINR(p.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Platform commission ({Math.round(p.commissionRate * 100)}%)</span>
+                    <span className="text-foreground">{formatINR(p.commission)}</span>
+                  </div>
+                  {p.refundableDeposit > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Security deposit (refundable)</span>
+                      <span className="text-foreground">{formatINR(p.refundableDeposit)}</span>
+                    </div>
+                  )}
+                  <Separator className="my-1" />
+                  <div className="flex justify-between font-semibold">
+                    <span>You pay now</span>
+                    <span>{formatINR(p.buyerPays)}</span>
+                  </div>
+                  {p.refundOnReturn > 0 && (
+                    <p className="text-xs text-primary">Refund of {formatINR(p.refundOnReturn)} on successful return.</p>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="flex gap-3 pt-2 flex-wrap">
               {isOwner && (
                 <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate(`/edit-listing/${item.id}`)}>
