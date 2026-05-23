@@ -46,6 +46,12 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/trust/kyc" element={<KYC />} />
+            <Route path="/trust/escrow" element={<Escrow />} />
+            <Route path="/trust/disputes" element={<Disputes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
