@@ -368,8 +368,33 @@ const ItemDetail = () => {
                   </Button>
                 </>
               )}
-              <Button variant="ghost" size="icon" aria-label="Add to favorites"><Heart className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon" aria-label="Share item"><Share2 className="h-5 w-5" /></Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={isWishlisted(item.id) ? "Remove from wishlist" : "Add to wishlist"}
+                onClick={() => {
+                  const added = toggleWishlist(item.id);
+                  toast({ title: added ? "Added to wishlist" : "Removed from wishlist" });
+                }}
+              >
+                <Heart className={`h-5 w-5 ${isWishlisted(item.id) ? "fill-primary text-primary" : ""}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Share item"
+                onClick={async () => {
+                  const result = await shareItem({
+                    title: item.title,
+                    text: shortDesc,
+                    url: `${window.location.origin}/item/${item.id}`,
+                  });
+                  if (result === "copied") toast({ title: "Link copied to clipboard" });
+                  else if (result === "failed") toast({ title: "Could not share", variant: "destructive" });
+                }}
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
               {!isOwner && user && <ReportDialog reportedListingId={item.id} reportedUserId={item.user_id} triggerVariant="icon" />}
             </div>
           </motion.div>
