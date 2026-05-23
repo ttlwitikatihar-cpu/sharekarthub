@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ReportDialog from "@/components/ReportDialog";
 import { trackActivity } from "@/lib/trackActivity";
 import SEO from "@/components/SEO";
+import { useWishlist, shareItem } from "@/lib/wishlist";
+import { calculatePricing, formatINR } from "@/lib/pricing";
 
 const ItemDetail = () => {
   const { id } = useParams();
