@@ -253,6 +253,30 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!warnTarget} onOpenChange={() => { setWarnTarget(null); setWarnReason(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Warn seller about "{warnTarget?.title}"</DialogTitle>
+            <DialogDescription>Send a private notification explaining the issue. The seller will see it in their notifications.</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Reason for warning (e.g. misleading description, wrong images, prohibited item)..."
+            value={warnReason}
+            onChange={(e) => setWarnReason(e.target.value)}
+            rows={4}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setWarnTarget(null); setWarnReason(""); }}>Cancel</Button>
+            <Button
+              onClick={() => warnTarget && sendWarning.mutate({ listing: warnTarget, reason: warnReason.trim() })}
+              disabled={!warnReason.trim() || sendWarning.isPending}
+            >
+              {sendWarning.isPending ? "Sending..." : "Send Warning"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
