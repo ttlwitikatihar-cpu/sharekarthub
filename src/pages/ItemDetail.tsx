@@ -17,6 +17,7 @@ import { trackActivity } from "@/lib/trackActivity";
 import SEO from "@/components/SEO";
 import { useWishlist, shareItem } from "@/lib/wishlist";
 import { calculatePricing, formatINR } from "@/lib/pricing";
+import { usePlatformSettings } from "@/hooks/use-platform-settings";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -25,6 +26,8 @@ const ItemDetail = () => {
   const { toast } = useToast();
   const [orderQty, setOrderQty] = useState(1);
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const settings = usePlatformSettings();
+
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["listing", id],
