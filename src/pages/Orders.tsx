@@ -20,6 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import ReviewDialog from "@/components/ReviewDialog";
 import { calculatePricing, formatINR } from "@/lib/pricing";
+import { usePlatformSettings } from "@/hooks/use-platform-settings";
+
 
 const OTP_EXPIRY_HOURS = 48;
 
@@ -40,6 +42,8 @@ const Orders = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const settings = usePlatformSettings();
+
   const [otpInputs, setOtpInputs] = useState<Record<string, string>>({});
   const [repostDialog, setRepostDialog] = useState<any>(null);
   const [repostLoading, setRepostLoading] = useState(false);
