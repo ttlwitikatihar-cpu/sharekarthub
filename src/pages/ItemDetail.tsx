@@ -17,6 +17,7 @@ import { trackActivity } from "@/lib/trackActivity";
 import SEO from "@/components/SEO";
 import { useWishlist, shareItem } from "@/lib/wishlist";
 import { calculatePricing, formatINR } from "@/lib/pricing";
+import { usePlatformSettings } from "@/hooks/use-platform-settings";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -25,6 +26,8 @@ const ItemDetail = () => {
   const { toast } = useToast();
   const [orderQty, setOrderQty] = useState(1);
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const settings = usePlatformSettings();
+
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["listing", id],
@@ -318,6 +321,7 @@ const ItemDetail = () => {
                 price: item.price ?? 0,
                 quantity: orderQty,
                 securityDeposit: item.security_deposit ?? 0,
+                settings,
               });
               return (
                 <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-sm">
@@ -326,10 +330,12 @@ const ItemDetail = () => {
                     <span>Subtotal ({orderQty} × {formatINR(item.price ?? 0)})</span>
                     <span className="text-foreground">{formatINR(p.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Platform commission ({Math.round(p.commissionRate * 100)}%)</span>
-                    <span className="text-foreground">{formatINR(p.commission)}</span>
-                  </div>
+                  {p.commissionEnabled && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Platform commission ({Math.round(p.commissionRate * 100)}%)</span>
+                      <span className="text-foreground">{formatINR(p.commission)}</span>
+                    </div>
+                  )}
                   {p.refundableDeposit > 0 && (
                     <div className="flex justify-between text-muted-foreground">
                       <span>Security deposit (refundable)</span>
@@ -347,6 +353,7 @@ const ItemDetail = () => {
                 </div>
               );
             })()}
+
 
             <div className="flex gap-3 pt-2 flex-wrap">
               {isOwner && (

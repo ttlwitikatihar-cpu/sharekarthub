@@ -241,6 +241,33 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          commission_enabled: boolean
+          id: string
+          rent_commission_rate: number
+          sell_commission_rate: number
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          commission_enabled?: boolean
+          id?: string
+          rent_commission_rate?: number
+          sell_commission_rate?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          commission_enabled?: boolean
+          id?: string
+          rent_commission_rate?: number
+          sell_commission_rate?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
