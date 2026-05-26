@@ -326,6 +326,7 @@ const Orders = () => {
                       price: order.listing.price ?? 0,
                       quantity: order.quantity,
                       securityDeposit: order.listing.security_deposit ?? 0,
+                      settings,
                     });
                     return (
                       <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs space-y-1">
@@ -336,7 +337,9 @@ const Orders = () => {
                           )}
                         </div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatINR(p.subtotal)}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Platform commission ({Math.round(p.commissionRate * 100)}%)</span><span>{formatINR(p.commission)}</span></div>
+                        {p.commissionEnabled && (
+                          <div className="flex justify-between"><span className="text-muted-foreground">Platform commission ({Math.round(p.commissionRate * 100)}%)</span><span>{formatINR(p.commission)}</span></div>
+                        )}
                         {p.refundableDeposit > 0 && (
                           <div className="flex justify-between"><span className="text-muted-foreground">Security deposit</span><span>{formatINR(p.refundableDeposit)}</span></div>
                         )}
@@ -354,6 +357,7 @@ const Orders = () => {
                       </div>
                     );
                   })()}
+
 
                   {/* OTP Expiry Timer */}
                   {order.status === "pending" && !expired && (
