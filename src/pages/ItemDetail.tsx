@@ -197,7 +197,8 @@ const ItemDetail = () => {
 
             {item.security_deposit && item.security_deposit > 0 && (
               <p className="text-sm text-muted-foreground">
-                Security deposit: <span className="font-semibold text-foreground">₹{item.security_deposit.toLocaleString()}</span> (held in escrow)
+                Security deposit: <span className="font-semibold text-foreground">₹{item.security_deposit.toLocaleString()}</span>{" "}
+                <span className="text-amber-600">(refundable · escrow coming soon)</span>
               </p>
             )}
 
