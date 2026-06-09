@@ -367,29 +367,13 @@ const ItemDetail = () => {
               )}
               {!isOwner && (
                 <>
-                  <Button className="flex-1 gap-2" size="lg" disabled={outOfStock} onClick={async () => {
+                  <Button className="flex-1 gap-2" size="lg" disabled={outOfStock} onClick={() => {
                     if (!user) { navigate("/auth"); return; }
                     if (outOfStock) {
                       toast({ title: "Out of Stock", description: "This item is currently unavailable.", variant: "destructive" });
                       return;
                     }
-                    const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
-                    const { error } = await supabase.from("orders").insert({
-                      listing_id: item.id,
-                      buyer_id: user.id,
-                      seller_id: item.user_id,
-                      quantity: orderQty,
-                      handover_otp: generateOTP(),
-                      return_otp: item.category === "rent" ? generateOTP() : null,
-                    } as any);
-                    if (error) {
-                      const msg = error.message.includes("stock") ? "Not enough stock available." : error.message;
-                      toast({ title: "Cannot place order", description: msg, variant: "destructive" });
-                    } else {
-                      trackActivity("placed_order", `Ordered ${orderQty}x "${item.title}"`, { listing_id: item.id, category: item.category });
-                      toast({ title: "Order placed!", description: `${orderQty} item(s) ordered. Check your orders for OTP verification.` });
-                      navigate("/orders");
-                    }
+                    setShowTerms(true);
                   }}>
                     {outOfStock ? "Out of Stock" : isDonation ? "Request Item" : item.category === "rent" ? "Request to Rent" : "Buy Now"}
                   </Button>
