@@ -432,6 +432,36 @@ const ItemDetail = () => {
           </motion.div>
         </div>
       </main>
+      <OrderTermsDialog
+        open={showTerms}
+        onOpenChange={setShowTerms}
+        loading={placing}
+        category={item?.category}
+        onAccept={async () => {
+          if (!user || !item) return;
+          setPlacing(true);
+          const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+          const { error } = await supabase.from("orders").insert({
+            listing_id: item.id,
+            buyer_id: user.id,
+            seller_id: item.user_id,
+            quantity: orderQty,
+            handover_otp: generateOTP(),
+            return_otp: item.category === "rent" ? generateOTP() : null,
+            terms_accepted_at: new Date().toISOString(),
+          } as any);
+          setPlacing(false);
+          if (error) {
+            const msg = error.message.includes("stock") ? "Not enough stock available." : error.message;
+            toast({ title: "Cannot place order", description: msg, variant: "destructive" });
+          } else {
+            trackActivity("placed_order", `Ordered ${orderQty}x "${item.title}"`, { listing_id: item.id, category: item.category });
+            toast({ title: "Order placed!", description: `${orderQty} item(s) ordered. Check your orders for OTP verification.` });
+            setShowTerms(false);
+            navigate("/orders");
+          }
+        }}
+      />
       <Footer />
     </div>
   );
