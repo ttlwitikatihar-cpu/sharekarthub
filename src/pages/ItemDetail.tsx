@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ReportDialog from "@/components/ReportDialog";
+import OrderTermsDialog from "@/components/OrderTermsDialog";
 import { trackActivity } from "@/lib/trackActivity";
 import SEO from "@/components/SEO";
 import { useWishlist, shareItem } from "@/lib/wishlist";
@@ -25,6 +26,8 @@ const ItemDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orderQty, setOrderQty] = useState(1);
+  const [showTerms, setShowTerms] = useState(false);
+  const [placing, setPlacing] = useState(false);
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
   const settings = usePlatformSettings();
 
