@@ -385,9 +385,9 @@ const Orders = () => {
                         <ShieldCheck className="h-4 w-4 text-primary" />
                         Handover Verification
                       </div>
-                      {isSeller && order.handover_otp && (
+                      {isSeller && (
                         <p className="text-sm text-muted-foreground">
-                          Share this OTP with the buyer: <span className="font-mono font-bold text-foreground">{order.handover_otp}</span>
+                          Share this OTP with the buyer: <OtpReveal orderId={order.id} which="handover" />
                         </p>
                       )}
                       {isBuyer && !order.handover_confirmed && (
