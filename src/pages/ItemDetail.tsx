@@ -117,7 +117,7 @@ const ItemDetail = () => {
   }
 
   const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate" };
-  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; phone: string | null; shop_name: string | null; donations_count: number | null } | null;
+  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; shop_name: string | null; donations_count: number | null } | null;
   const verified = profile?.kyc_status === "verified";
   const availableQty = item.quantity ?? 0;
   const outOfStock = item.status === "out_of_stock" || availableQty <= 0;
