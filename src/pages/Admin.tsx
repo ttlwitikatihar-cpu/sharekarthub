@@ -39,17 +39,7 @@ const Admin = () => {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_list_profiles");
       if (error) throw error;
-      return data as any[];
-    },
-    enabled: !!isAdmin,
-  });
-
-  const _unused_old = (async () => { return; });
-  void _unused_old;
-  // legacy block kept above for type return
-  const _dummy_keep = ((): null => null);
-      if (error) throw error;
-      return data;
+      return (data as any[]) || [];
     },
     enabled: !!isAdmin,
   });
