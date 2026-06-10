@@ -417,9 +417,9 @@ const Orders = () => {
                         <ShieldCheck className="h-4 w-4 text-accent" />
                         Return Verification
                       </div>
-                      {isBuyer && order.return_otp && (
+                      {isBuyer && (
                         <p className="text-sm text-muted-foreground">
-                          Share this OTP with the seller: <span className="font-mono font-bold text-foreground">{order.return_otp}</span>
+                          Share this OTP with the seller: <OtpReveal orderId={order.id} which="return" />
                         </p>
                       )}
                       {isSeller && !order.return_confirmed && (
