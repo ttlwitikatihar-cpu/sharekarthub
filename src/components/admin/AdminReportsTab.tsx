@@ -38,8 +38,8 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-report-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name, shop_name, phone, kyc_status");
-      return data || [];
+      const { data } = await supabase.rpc("admin_list_profiles");
+      return ((data as any[]) || []);
     },
   });
 

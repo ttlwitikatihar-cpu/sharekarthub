@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import ReviewDialog from "@/components/ReviewDialog";
+import OtpReveal from "@/components/OtpReveal";
 import { calculatePricing, formatINR } from "@/lib/pricing";
 import { usePlatformSettings } from "@/hooks/use-platform-settings";
 
@@ -103,35 +104,33 @@ const Orders = () => {
       toast({ title: "OTP Expired", description: "Please cancel and create a new order.", variant: "destructive" });
       return;
     }
-    const input = otpInputs[`handover-${orderId}`];
-    if (input === order?.handover_otp) {
-      await supabase.from("orders").update({ handover_confirmed: true, status: "active" }).eq("id", orderId);
+    const input = (otpInputs[`handover-${orderId}`] || "").trim();
+    const { data, error } = await supabase.rpc("verify_handover_otp", { _order_id: orderId, _otp: input });
+    if (error || !data) {
+      toast({ title: "Invalid OTP", variant: "destructive" });
+    } else {
       toast({ title: "Handover confirmed!" });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-    } else {
-      toast({ title: "Invalid OTP", variant: "destructive" });
     }
   };
 
   const verifyReturnOTP = async (orderId: string) => {
     const order = orders.find((o: any) => o.id === orderId);
-    const input = otpInputs[`return-${orderId}`];
-    if (input === order?.return_otp) {
-      await supabase.from("orders").update({ return_confirmed: true, status: "completed" }).eq("id", orderId);
-      toast({ title: "Return confirmed!" });
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-
-      // Show repost dialog for seller on rental return
-      const isSeller = order.seller_id === user?.id;
-      if (isSeller && order.listing?.category === "rent") {
-        setRepostDialog(order);
-        setRepostQuantity(String(order.quantity || 1));
-        setRepostPrice(String(order.listing?.price ?? ""));
-        setRepostDeposit(String(order.listing?.security_deposit ?? ""));
-        setRepostDescription(order.listing?.description || "");
-      }
-    } else {
+    const input = (otpInputs[`return-${orderId}`] || "").trim();
+    const { data, error } = await supabase.rpc("verify_return_otp", { _order_id: orderId, _otp: input });
+    if (error || !data) {
       toast({ title: "Invalid OTP", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Return confirmed!" });
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+    const isSeller = order?.seller_id === user?.id;
+    if (isSeller && order?.listing?.category === "rent") {
+      setRepostDialog(order);
+      setRepostQuantity(String(order.quantity || 1));
+      setRepostPrice(String(order.listing?.price ?? ""));
+      setRepostDeposit(String(order.listing?.security_deposit ?? ""));
+      setRepostDescription(order.listing?.description || "");
     }
   };
 
@@ -386,9 +385,9 @@ const Orders = () => {
                         <ShieldCheck className="h-4 w-4 text-primary" />
                         Handover Verification
                       </div>
-                      {isSeller && order.handover_otp && (
+                      {isSeller && (
                         <p className="text-sm text-muted-foreground">
-                          Share this OTP with the buyer: <span className="font-mono font-bold text-foreground">{order.handover_otp}</span>
+                          Share this OTP with the buyer: <OtpReveal orderId={order.id} which="handover" />
                         </p>
                       )}
                       {isBuyer && !order.handover_confirmed && (
@@ -418,9 +417,9 @@ const Orders = () => {
                         <ShieldCheck className="h-4 w-4 text-accent" />
                         Return Verification
                       </div>
-                      {isBuyer && order.return_otp && (
+                      {isBuyer && (
                         <p className="text-sm text-muted-foreground">
-                          Share this OTP with the seller: <span className="font-mono font-bold text-foreground">{order.return_otp}</span>
+                          Share this OTP with the seller: <OtpReveal orderId={order.id} which="return" />
                         </p>
                       )}
                       {isSeller && !order.return_confirmed && (

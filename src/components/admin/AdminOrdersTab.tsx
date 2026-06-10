@@ -24,10 +24,11 @@ const AdminOrdersTab = ({ orders, logAction }: AdminOrdersTabProps) => {
     queryKey: ["admin-order-profiles", expandedOrder],
     queryFn: async () => {
       if (!expandedItem) return null;
-      const { data } = await supabase.from("profiles").select("user_id, full_name, shop_name, phone, kyc_status").in("user_id", [expandedItem.buyer_id, expandedItem.seller_id]);
+      const { data } = await supabase.rpc("admin_get_profiles", { _user_ids: [expandedItem.buyer_id, expandedItem.seller_id] });
+      const rows = (data as any[]) || [];
       return {
-        buyer: data?.find(p => p.user_id === expandedItem.buyer_id),
-        seller: data?.find(p => p.user_id === expandedItem.seller_id),
+        buyer: rows.find((p: any) => p.user_id === expandedItem.buyer_id),
+        seller: rows.find((p: any) => p.user_id === expandedItem.seller_id),
       };
     },
     enabled: !!expandedItem,

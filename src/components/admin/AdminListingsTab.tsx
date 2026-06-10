@@ -30,8 +30,8 @@ const AdminListingsTab = ({ listings, logAction }: AdminListingsTabProps) => {
   const { data: sellerProfile } = useQuery({
     queryKey: ["admin-listing-seller", expandedItem?.user_id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("full_name, shop_name, rating, total_reviews, phone, kyc_status").eq("user_id", expandedItem!.user_id).single();
-      return data;
+      const { data } = await supabase.rpc("admin_get_profiles", { _user_ids: [expandedItem!.user_id] });
+      return (data && (data as any[])[0]) || null;
     },
     enabled: !!expandedItem,
   });

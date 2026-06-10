@@ -44,7 +44,7 @@ const ItemDetail = () => {
       
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, rating, total_reviews, kyc_status, phone, shop_name, donations_count")
+        .select("full_name, avatar_url, rating, total_reviews, kyc_status, shop_name, donations_count")
         .eq("user_id", data.user_id)
         .single();
       
@@ -117,7 +117,7 @@ const ItemDetail = () => {
   }
 
   const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate" };
-  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; phone: string | null; shop_name: string | null; donations_count: number | null } | null;
+  const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; shop_name: string | null; donations_count: number | null } | null;
   const verified = profile?.kyc_status === "verified";
   const availableQty = item.quantity ?? 0;
   const outOfStock = item.status === "out_of_stock" || availableQty <= 0;
@@ -260,7 +260,7 @@ const ItemDetail = () => {
                     {contactRevealed ? (
                       <>
                         <Eye className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-foreground">Phone: {profile.phone || "Not provided"}</span>
+                        <span className="text-foreground">Contact unlocked — message the seller in chat to coordinate.</span>
                       </>
                     ) : (
                       <>
@@ -440,14 +440,11 @@ const ItemDetail = () => {
         onAccept={async () => {
           if (!user || !item) return;
           setPlacing(true);
-          const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
           const { error } = await supabase.from("orders").insert({
             listing_id: item.id,
             buyer_id: user.id,
             seller_id: item.user_id,
             quantity: orderQty,
-            handover_otp: generateOTP(),
-            return_otp: item.category === "rent" ? generateOTP() : null,
             terms_accepted_at: new Date().toISOString(),
           } as any);
           setPlacing(false);

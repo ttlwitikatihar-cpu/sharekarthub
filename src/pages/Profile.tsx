@@ -48,7 +48,9 @@ const Profile = () => {
         .eq("user_id", user!.id)
         .single();
       if (error) throw error;
-      return data;
+      const { data: priv } = await supabase.rpc("get_profile_private", { _user_id: user!.id });
+      const privRow = Array.isArray(priv) && priv.length ? priv[0] : null;
+      return { ...data, ...(privRow || {}) } as any;
     },
     enabled: !!user,
   });
