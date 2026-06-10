@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import ReviewDialog from "@/components/ReviewDialog";
+import OtpReveal from "@/components/OtpReveal";
 import { calculatePricing, formatINR } from "@/lib/pricing";
 import { usePlatformSettings } from "@/hooks/use-platform-settings";
 
