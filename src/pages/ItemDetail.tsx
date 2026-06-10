@@ -44,7 +44,7 @@ const ItemDetail = () => {
       
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, rating, total_reviews, kyc_status, phone, shop_name, donations_count")
+        .select("full_name, avatar_url, rating, total_reviews, kyc_status, shop_name, donations_count")
         .eq("user_id", data.user_id)
         .single();
       
