@@ -435,11 +435,37 @@ export type Database = {
     }
     Functions: {
       cancel_expired_orders: { Args: never; Returns: number }
+      get_order_otp: {
+        Args: { _order_id: string; _which: string }
+        Returns: string
+      }
+      get_profile_private: {
+        Args: { _user_id: string }
+        Returns: {
+          address: string
+          city: string
+          id_number: string
+          id_type: string
+          kyc_document_url: string
+          phone: string
+          pincode: string
+          state: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      verify_handover_otp: {
+        Args: { _order_id: string; _otp: string }
+        Returns: boolean
+      }
+      verify_return_otp: {
+        Args: { _order_id: string; _otp: string }
         Returns: boolean
       }
     }
