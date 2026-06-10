@@ -260,7 +260,7 @@ const ItemDetail = () => {
                     {contactRevealed ? (
                       <>
                         <Eye className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-foreground">Phone: {profile.phone || "Not provided"}</span>
+                        <span className="text-foreground">Contact unlocked — message the seller in chat to coordinate.</span>
                       </>
                     ) : (
                       <>
