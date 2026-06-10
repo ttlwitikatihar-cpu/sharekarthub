@@ -440,14 +440,11 @@ const ItemDetail = () => {
         onAccept={async () => {
           if (!user || !item) return;
           setPlacing(true);
-          const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
           const { error } = await supabase.from("orders").insert({
             listing_id: item.id,
             buyer_id: user.id,
             seller_id: item.user_id,
             quantity: orderQty,
-            handover_otp: generateOTP(),
-            return_otp: item.category === "rent" ? generateOTP() : null,
             terms_accepted_at: new Date().toISOString(),
           } as any);
           setPlacing(false);
