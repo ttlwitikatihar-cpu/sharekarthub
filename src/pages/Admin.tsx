@@ -179,6 +179,7 @@ const Admin = () => {
                 {activeTab === "listings" && <AdminListingsTab listings={listings} logAction={logAction} />}
                 {activeTab === "orders" && <AdminOrdersTab orders={orders} logAction={logAction} />}
                 {activeTab === "reports" && <AdminReportsTab userId={user?.id} logAction={logAction} />}
+                {activeTab === "tickets" && <AdminTicketsTab />}
                 {activeTab === "logs" && <AdminLogsTab />}
                 {activeTab === "settings" && <AdminSettingsTab />}
               </motion.div>
