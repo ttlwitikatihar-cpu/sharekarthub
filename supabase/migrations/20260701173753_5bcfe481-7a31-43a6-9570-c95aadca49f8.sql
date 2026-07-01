@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.notify_on_ticket_event() FROM PUBLIC, anon, authenticated;
