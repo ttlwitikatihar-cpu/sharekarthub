@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter, Star, LifeBuoy } from "lucide-react";
+import RaiseTicketDialog from "@/components/RaiseTicketDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ const Orders = () => {
   const [repostDeposit, setRepostDeposit] = useState("");
   const [repostDescription, setRepostDescription] = useState("");
   const [reviewOrder, setReviewOrder] = useState<any>(null);
+  const [ticketOrder, setTicketOrder] = useState<any>(null);
 
   const { data: myReviews = [] } = useQuery({
     queryKey: ["my-reviews", user?.id],
@@ -467,14 +469,23 @@ const Orders = () => {
                     </div>
                   )}
 
-                  {/* Cancel button for pending orders */}
-                  {order.status === "pending" && (isBuyer || isSeller) && (
-                    <div className="pt-1">
+                  {/* Cancel + Raise Ticket buttons */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {order.status === "pending" && (isBuyer || isSeller) && (
                       <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => cancelOrder(order.id)}>
                         <Trash2 className="h-3.5 w-3.5" /> Cancel Order
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {(isBuyer || isSeller) && order.status !== "cancelled" && (
+                      <Button variant="outline" size="sm" className="gap-1.5"
+                        onClick={() => setTicketOrder({ ...order, listing: order.listing })}>
+                        <LifeBuoy className="h-3.5 w-3.5" /> Raise Ticket
+                      </Button>
+                    )}
+                    <Link to="/tickets" className="text-xs text-muted-foreground hover:text-foreground underline ml-auto">
+                      My tickets
+                    </Link>
+                  </div>
                 </motion.div>
               );
             })}
@@ -484,6 +495,14 @@ const Orders = () => {
         )}
       </main>
       <Footer />
+
+      {ticketOrder && (
+        <RaiseTicketDialog
+          open={!!ticketOrder}
+          onOpenChange={(o) => !o && setTicketOrder(null)}
+          order={ticketOrder}
+        />
+      )}
 
       {/* Repost Dialog */}
       <Dialog open={!!repostDialog} onOpenChange={(open) => !open && setRepostDialog(null)}>

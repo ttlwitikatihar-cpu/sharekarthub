@@ -18,6 +18,7 @@ import AdminOrdersTab from "@/components/admin/AdminOrdersTab";
 import AdminReportsTab from "@/components/admin/AdminReportsTab";
 import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminSettingsTab from "@/components/admin/AdminSettingsTab";
+import AdminTicketsTab from "@/components/admin/AdminTicketsTab";
 
 const Admin = () => {
   const { user } = useAuth();
@@ -112,6 +113,7 @@ const Admin = () => {
     listings: "Listing Management",
     orders: "Order Management",
     reports: "Reports & Complaints",
+    tickets: "Support Tickets",
     logs: "Activity Logs",
     settings: "Platform Settings",
   };
@@ -177,6 +179,7 @@ const Admin = () => {
                 {activeTab === "listings" && <AdminListingsTab listings={listings} logAction={logAction} />}
                 {activeTab === "orders" && <AdminOrdersTab orders={orders} logAction={logAction} />}
                 {activeTab === "reports" && <AdminReportsTab userId={user?.id} logAction={logAction} />}
+                {activeTab === "tickets" && <AdminTicketsTab />}
                 {activeTab === "logs" && <AdminLogsTab />}
                 {activeTab === "settings" && <AdminSettingsTab />}
               </motion.div>

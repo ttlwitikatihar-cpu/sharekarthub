@@ -22,6 +22,8 @@ import Terms from "./pages/Terms";
 import KYC from "./pages/trust/KYC";
 import Escrow from "./pages/trust/Escrow";
 import Disputes from "./pages/trust/Disputes";
+import Tickets from "./pages/Tickets";
+import TicketDetail from "./pages/TicketDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => (
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/tickets" element={<Tickets />} />
+            <Route path="/tickets/:id" element={<TicketDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
