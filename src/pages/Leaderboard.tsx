@@ -207,7 +207,9 @@ const Leaderboard = () => {
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-semibold">{entry.points} pts</span>
-                      <p className="text-xs text-muted-foreground">{entry.donationsCount} donations</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.donationsCount} donations · {(entry.points / Math.max(entry.donationsCount, 1)).toFixed(1)} pts/donation
+                      </p>
                     </div>
                   </motion.div>
                 ))}
