@@ -173,6 +173,9 @@ const Leaderboard = () => {
                     {entry.shopName && <p className="text-xs text-primary truncate">🏪 {entry.shopName}</p>}
                     <p className="text-xs text-muted-foreground mt-1">{entry.donationsCount} donations</p>
                     <p className="text-sm font-bold text-accent mt-1">{entry.points} pts</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {(entry.points / Math.max(entry.donationsCount, 1)).toFixed(1)} pts / donation
+                    </p>
                     <div className="mt-2">
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         <Medal className="h-3 w-3" /> Rank #{entry.rank}
