@@ -384,6 +384,116 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          against_user_id: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          listing_id: string | null
+          order_id: string | null
+          priority: string
+          raised_by: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          against_user_id: string
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          listing_id?: string | null
+          order_id?: string | null
+          priority?: string
+          raised_by: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          against_user_id?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          listing_id?: string | null
+          order_id?: string | null
+          priority?: string
+          raised_by?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          id: string
+          is_admin_reply: boolean
+          is_system: boolean
+          message: string
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_admin_reply?: boolean
+          is_system?: boolean
+          message: string
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_admin_reply?: boolean
+          is_system?: boolean
+          message?: string
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity: {
         Row: {
           action: string
