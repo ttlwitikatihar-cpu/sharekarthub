@@ -22,6 +22,8 @@ import Terms from "./pages/Terms";
 import KYC from "./pages/trust/KYC";
 import Escrow from "./pages/trust/Escrow";
 import Disputes from "./pages/trust/Disputes";
+import Tickets from "./pages/Tickets";
+import TicketDetail from "./pages/TicketDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
