@@ -19,22 +19,66 @@ const Leaderboard = () => {
   const { data: donors = [], isLoading, refetch } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Pull every listing that is a donation (by category OR listing_type)
+      const { data: donateListings, error: lErr } = await supabase
+        .from("listings")
+        .select("id, user_id, status")
+        .or("category.eq.donate,listing_type.eq.donate");
+      if (lErr) throw lErr;
+
+      // Pull completed donation orders (bonus points on actual handover)
+      const listingIds = (donateListings ?? []).map((l) => l.id);
+      let completedBySeller = new Map<string, number>();
+      if (listingIds.length) {
+        const { data: completed } = await supabase
+          .from("orders")
+          .select("seller_id, listing_id, status")
+          .in("listing_id", listingIds)
+          .eq("status", "completed");
+        (completed ?? []).forEach((o) => {
+          completedBySeller.set(o.seller_id, (completedBySeller.get(o.seller_id) ?? 0) + 1);
+        });
+      }
+
+      // Aggregate per donor: 1 pt per listed donation, +10 pts per completed donation
+      const agg = new Map<string, { listed: number; completed: number }>();
+      (donateListings ?? []).forEach((l) => {
+        const cur = agg.get(l.user_id) ?? { listed: 0, completed: 0 };
+        cur.listed += 1;
+        agg.set(l.user_id, cur);
+      });
+      completedBySeller.forEach((count, uid) => {
+        const cur = agg.get(uid) ?? { listed: 0, completed: 0 };
+        cur.completed = count;
+        agg.set(uid, cur);
+      });
+
+      const userIds = Array.from(agg.keys());
+      if (!userIds.length) return [];
+
+      const { data: profs } = await supabase
         .from("profiles")
-        .select("user_id, full_name, avatar_url, donations_count, reward_points, shop_name")
-        .gt("donations_count", 0)
-        .order("donations_count", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data.map((d, i) => ({
-        rank: i + 1,
-        userId: d.user_id,
-        name: d.full_name || "Anonymous Donor",
-        shopName: d.shop_name,
-        donationsCount: d.donations_count ?? 0,
-        points: d.reward_points ?? 0,
-        badge: getBadge(i + 1),
-      }));
+        .select("user_id, full_name, avatar_url, shop_name")
+        .in("user_id", userIds);
+      const pMap = new Map((profs ?? []).map((p) => [p.user_id, p]));
+
+      return userIds
+        .map((uid) => {
+          const s = agg.get(uid)!;
+          const p = pMap.get(uid);
+          const donationsCount = s.listed + s.completed;
+          const points = s.listed * 1 + s.completed * 10;
+          return {
+            userId: uid,
+            name: p?.full_name || "Anonymous Donor",
+            shopName: p?.shop_name,
+            donationsCount,
+            points,
+          };
+        })
+        .sort((a, b) => b.points - a.points || b.donationsCount - a.donationsCount)
+        .slice(0, 20)
+        .map((d, i) => ({ ...d, rank: i + 1, badge: getBadge(i + 1) }));
     },
     staleTime: 30000,
     refetchInterval: 60000,
