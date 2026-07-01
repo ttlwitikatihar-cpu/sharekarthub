@@ -113,6 +113,7 @@ const Admin = () => {
     listings: "Listing Management",
     orders: "Order Management",
     reports: "Reports & Complaints",
+    tickets: "Support Tickets",
     logs: "Activity Logs",
     settings: "Platform Settings",
   };
