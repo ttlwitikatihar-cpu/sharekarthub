@@ -255,7 +255,9 @@ const Leaderboard = () => {
             <Gift className="h-5 w-5 text-primary" /> Rewards Program
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Earn points for every donation. Top donors get featured badges, early access to items, and platform credits. Every contribution counts!
+            Earn <span className="font-semibold text-foreground">1 pt</span> for every donation you list and a bonus{" "}
+            <span className="font-semibold text-foreground">+10 pts</span> when the item is successfully handed over.
+            Ranking is based on total points earned across all donations.
           </p>
         </motion.div>
       </main>
