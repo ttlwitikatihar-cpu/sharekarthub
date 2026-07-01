@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle, ShieldCheck, Package, Trash2, Clock, AlertTriangle, Copy, RefreshCw, Filter, Star, LifeBuoy } from "lucide-react";
+import RaiseTicketDialog from "@/components/RaiseTicketDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
