@@ -54,6 +54,7 @@ const Orders = () => {
   const [repostDeposit, setRepostDeposit] = useState("");
   const [repostDescription, setRepostDescription] = useState("");
   const [reviewOrder, setReviewOrder] = useState<any>(null);
+  const [ticketOrder, setTicketOrder] = useState<any>(null);
 
   const { data: myReviews = [] } = useQuery({
     queryKey: ["my-reviews", user?.id],
