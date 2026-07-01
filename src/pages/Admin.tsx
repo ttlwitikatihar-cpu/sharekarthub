@@ -18,6 +18,7 @@ import AdminOrdersTab from "@/components/admin/AdminOrdersTab";
 import AdminReportsTab from "@/components/admin/AdminReportsTab";
 import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminSettingsTab from "@/components/admin/AdminSettingsTab";
+import AdminTicketsTab from "@/components/admin/AdminTicketsTab";
 
 const Admin = () => {
   const { user } = useAuth();
