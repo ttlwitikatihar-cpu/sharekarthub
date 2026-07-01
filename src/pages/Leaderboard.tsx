@@ -173,6 +173,9 @@ const Leaderboard = () => {
                     {entry.shopName && <p className="text-xs text-primary truncate">🏪 {entry.shopName}</p>}
                     <p className="text-xs text-muted-foreground mt-1">{entry.donationsCount} donations</p>
                     <p className="text-sm font-bold text-accent mt-1">{entry.points} pts</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {(entry.points / Math.max(entry.donationsCount, 1)).toFixed(1)} pts / donation
+                    </p>
                     <div className="mt-2">
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         <Medal className="h-3 w-3" /> Rank #{entry.rank}
@@ -204,7 +207,9 @@ const Leaderboard = () => {
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-semibold">{entry.points} pts</span>
-                      <p className="text-xs text-muted-foreground">{entry.donationsCount} donations</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.donationsCount} donations · {(entry.points / Math.max(entry.donationsCount, 1)).toFixed(1)} pts/donation
+                      </p>
                     </div>
                   </motion.div>
                 ))}
@@ -250,7 +255,9 @@ const Leaderboard = () => {
             <Gift className="h-5 w-5 text-primary" /> Rewards Program
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Earn points for every donation. Top donors get featured badges, early access to items, and platform credits. Every contribution counts!
+            Earn <span className="font-semibold text-foreground">1 pt</span> for every donation you list and a bonus{" "}
+            <span className="font-semibold text-foreground">+10 pts</span> when the item is successfully handed over.
+            Ranking is based on total points earned across all donations.
           </p>
         </motion.div>
       </main>
