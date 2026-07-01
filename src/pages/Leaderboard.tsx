@@ -84,42 +84,33 @@ const Leaderboard = () => {
     refetchInterval: 60000,
   });
 
-  // Recent donations (completed donation orders) — show WHO donated WHAT
+  // Recent donations: newly listed donate items + completed donate orders
   const { data: recent = [], refetch: refetchRecent } = useQuery({
     queryKey: ["recent-donations"],
     queryFn: async () => {
-      const { data: orders, error } = await supabase
-        .from("orders")
-        .select("id, seller_id, listing_id, updated_at, status")
-        .eq("status", "completed")
-        .order("updated_at", { ascending: false })
-        .limit(50);
-      if (error || !orders?.length) return [];
+      const { data: listings } = await supabase
+        .from("listings")
+        .select("id, user_id, title, created_at, category, listing_type")
+        .or("category.eq.donate,listing_type.eq.donate")
+        .order("created_at", { ascending: false })
+        .limit(15);
 
-      const sellerIds = [...new Set(orders.map((o) => o.seller_id))];
-      const listingIds = [...new Set(orders.map((o) => o.listing_id))];
+      const sellerIds = [...new Set((listings ?? []).map((l) => l.user_id))];
+      if (!sellerIds.length) return [];
 
-      const [{ data: profiles }, { data: listings }] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, shop_name").in("user_id", sellerIds),
-        supabase.from("listings").select("id, title, category, listing_type").in("id", listingIds),
-      ]);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, shop_name")
+        .in("user_id", sellerIds);
+      const pMap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
 
-      const pMap = new Map(profiles?.map((p) => [p.user_id, p]) ?? []);
-      const lMap = new Map(listings?.map((l) => [l.id, l]) ?? []);
-
-      return orders
-        .filter((o) => {
-          const l = lMap.get(o.listing_id);
-          return l && (l.category === "donate" || l.listing_type === "donate");
-        })
-        .slice(0, 10)
-        .map((o) => ({
-          id: o.id,
-          when: o.updated_at,
-          donorName: pMap.get(o.seller_id)?.full_name || "Anonymous Donor",
-          shopName: pMap.get(o.seller_id)?.shop_name,
-          itemTitle: lMap.get(o.listing_id)?.title || "an item",
-        }));
+      return (listings ?? []).slice(0, 10).map((l) => ({
+        id: l.id,
+        when: l.created_at,
+        donorName: pMap.get(l.user_id)?.full_name || "Anonymous Donor",
+        shopName: pMap.get(l.user_id)?.shop_name,
+        itemTitle: l.title,
+      }));
     },
     staleTime: 30000,
     refetchInterval: 60000,
