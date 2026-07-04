@@ -82,7 +82,31 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
             </Badge>
           )}
         </div>
+        {!isOwner && (
+          <div className="absolute top-3 right-3 flex flex-col gap-1.5">
+            <button
+              onClick={stopAnd(() => toggleWishlist(item.id))}
+              aria-label="Toggle wishlist"
+              className="h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+            >
+              <Heart className={cn("h-4 w-4", wished ? "fill-primary text-primary" : "text-muted-foreground")} />
+            </button>
+            {!outOfStock && item.category !== "donate" && (
+              <button
+                onClick={stopAnd(() => { addToCart(item.id, 1); })}
+                aria-label="Add to cart"
+                className={cn(
+                  "h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 transition-transform",
+                  cartHas && "bg-primary text-primary-foreground"
+                )}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
 
       <div className="p-4 space-y-2">
         <h3 className="font-semibold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
