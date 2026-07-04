@@ -1,11 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X, User, Plus, LogOut, ShieldCheck, Shield } from "lucide-react";
+import { Menu, X, User, Plus, LogOut, ShieldCheck, Shield, ShoppingCart, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import NotificationBell from "@/components/NotificationBell";
+import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,8 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { count: cartCount } = useCart();
+  const { ids: wishlistIds } = useWishlist();
 
   const { data: isAdmin } = useQuery({
     queryKey: ["is-admin", user?.id],
@@ -35,6 +39,19 @@ const Navbar = () => {
     },
     enabled: !!user,
   });
+
+  const IconWithBadge = ({ to, label, count, children }: { to: string; label: string; count: number; children: React.ReactNode }) => (
+    <Link to={to} aria-label={label} className="relative inline-flex">
+      <Button variant="ghost" size="icon" className="relative">
+        {children}
+        {count > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </Button>
+    </Link>
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
@@ -52,7 +69,13 @@ const Navbar = () => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <IconWithBadge to="/wishlist" label="Wishlist" count={wishlistIds.length}>
+            <Heart className="h-5 w-5" />
+          </IconWithBadge>
+          <IconWithBadge to="/cart" label="Cart" count={cartCount}>
+            <ShoppingCart className="h-5 w-5" />
+          </IconWithBadge>
           {user ? (
             <>
               <Link to="/list-item">
@@ -107,6 +130,12 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
+            <Link to="/wishlist" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-medium rounded-md px-3 text-muted-foreground hover:bg-muted flex items-center gap-2">
+              <Heart className="h-4 w-4" /> Wishlist {wishlistIds.length > 0 && <span className="ml-auto text-xs">{wishlistIds.length}</span>}
+            </Link>
+            <Link to="/cart" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-medium rounded-md px-3 text-muted-foreground hover:bg-muted flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" /> Cart {cartCount > 0 && <span className="ml-auto text-xs">{cartCount}</span>}
+            </Link>
           </nav>
         </div>
       )}

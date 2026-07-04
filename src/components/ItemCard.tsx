@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
-import { MapPin, Clock, IndianRupee, Gift, Wrench, Star, Store, User, Heart } from "lucide-react";
+import { MapPin, Clock, IndianRupee, Gift, Wrench, Star, Store, User, Heart, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { useWishlist } from "@/lib/wishlist";
+import { useCart } from "@/lib/cart";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -24,6 +28,18 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
   const listingType = (item as any).listing_type as string | undefined;
   const isDonation = item.category === "donate";
+  const { user } = useAuth();
+  const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const { has: inCart, add: addToCart } = useCart();
+  const isOwner = user?.id === item.user_id;
+  const wished = isWishlisted(item.id);
+  const cartHas = inCart(item.id);
+
+  const stopAnd = (fn: () => void) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fn();
+  };
 
   const { data: sellerProfile } = useQuery({
     queryKey: ["seller-profile", item.user_id],
@@ -66,7 +82,31 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
             </Badge>
           )}
         </div>
+        {!isOwner && (
+          <div className="absolute top-3 right-3 flex flex-col gap-1.5">
+            <button
+              onClick={stopAnd(() => toggleWishlist(item.id))}
+              aria-label="Toggle wishlist"
+              className="h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+            >
+              <Heart className={cn("h-4 w-4", wished ? "fill-primary text-primary" : "text-muted-foreground")} />
+            </button>
+            {!outOfStock && item.category !== "donate" && (
+              <button
+                onClick={stopAnd(() => { addToCart(item.id, 1); })}
+                aria-label="Add to cart"
+                className={cn(
+                  "h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 transition-transform",
+                  cartHas && "bg-primary text-primary-foreground"
+                )}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
 
       <div className="p-4 space-y-2">
         <h3 className="font-semibold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
