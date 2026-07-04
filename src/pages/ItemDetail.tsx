@@ -17,6 +17,7 @@ import OrderTermsDialog from "@/components/OrderTermsDialog";
 import { trackActivity } from "@/lib/trackActivity";
 import SEO from "@/components/SEO";
 import { useWishlist, shareItem } from "@/lib/wishlist";
+import { useCart } from "@/lib/cart";
 import { calculatePricing, formatINR } from "@/lib/pricing";
 import { usePlatformSettings } from "@/hooks/use-platform-settings";
 
@@ -29,6 +30,7 @@ const ItemDetail = () => {
   const [showTerms, setShowTerms] = useState(false);
   const [placing, setPlacing] = useState(false);
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const { add: addToCart, has: inCart } = useCart();
   const settings = usePlatformSettings();
 
 
@@ -377,6 +379,19 @@ const ItemDetail = () => {
                   }}>
                     {outOfStock ? "Out of Stock" : isDonation ? "Request Item" : item.category === "rent" ? "Request to Rent" : "Buy Now"}
                   </Button>
+                  {!isDonation && !outOfStock && (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="gap-2"
+                      onClick={() => {
+                        if (!user) { navigate("/auth"); return; }
+                        addToCart(item.id, orderQty);
+                      }}
+                    >
+                      {inCart(item.id) ? "In Cart ✓" : "Add to Cart"}
+                    </Button>
+                  )}
                   <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
                     if (!user) { navigate("/auth"); return; }
                     const { data: existing } = await supabase
