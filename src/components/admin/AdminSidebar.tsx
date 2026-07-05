@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, ShoppingCart, Flag, LifeBuoy, ScrollText, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, Flag, LifeBuoy, ScrollText, Settings, DatabaseBackup } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ const items = [
   { title: "Reports", value: "reports", icon: Flag },
   { title: "Tickets", value: "tickets", icon: LifeBuoy },
   { title: "Activity Logs", value: "logs", icon: ScrollText },
+  { title: "Backup & Restore", value: "backup", icon: DatabaseBackup },
   { title: "Settings", value: "settings", icon: Settings },
 ];
 
