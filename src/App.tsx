@@ -10,7 +10,6 @@ import ListItem from "./pages/ListItem";
 import EditListing from "./pages/EditListing";
 import Leaderboard from "./pages/Leaderboard";
 import Chat from "./pages/Chat";
-import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
@@ -45,7 +44,6 @@ const App = () => (
             <Route path="/my-listings" element={<MyListings />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/cart" element={<Cart />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/tickets" element={<Tickets />} />
