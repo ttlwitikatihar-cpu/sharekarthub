@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Download, Upload, Database, ShieldAlert, Info, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Download, Upload, Database, ShieldAlert, Info, CheckCircle2, AlertTriangle, Github, Code2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
