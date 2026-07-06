@@ -89,6 +89,61 @@ const AdminBackupTab = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {/* Source Code Backup — GitHub */}
+      <div className="rounded-xl border border-border bg-gradient-to-br from-primary/5 to-transparent p-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg bg-foreground/90 flex items-center justify-center shrink-0">
+            <Github className="h-5 w-5 text-background" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-semibold text-lg flex items-center gap-2">
+              <Code2 className="h-4 w-4" /> Source Code Backup (every project file)
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              The data backup below saves your live database. To back up the actual <strong>project files &amp; code</strong> (every component, page, edge function, config), connect the project to GitHub — that gives you a downloadable, restorable copy of the entire codebase.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-background/60 p-4 space-y-3 text-sm">
+          <h3 className="font-medium">One-time setup (2 minutes)</h3>
+          <ol className="list-decimal ml-5 space-y-1.5 text-muted-foreground">
+            <li>Open this project in the Lovable editor.</li>
+            <li>Click the <strong>GitHub</strong> button (top-right of the editor) → <em>Connect to GitHub</em>.</li>
+            <li>Authorize Lovable and pick an account/organization to host the repo.</li>
+            <li>Lovable pushes every file to a new repo you own. From then on, every change auto-syncs.</li>
+          </ol>
+
+          <h3 className="font-medium pt-2">Downloading the code anytime</h3>
+          <ol className="list-decimal ml-5 space-y-1.5 text-muted-foreground">
+            <li>Open your GitHub repo.</li>
+            <li>Click the green <strong>Code</strong> button → <strong>Download ZIP</strong>.</li>
+            <li>You now have every file on your PC — components, pages, edge functions, migrations, config, assets.</li>
+          </ol>
+
+          <h3 className="font-medium pt-2">Restoring from a crash</h3>
+          <ol className="list-decimal ml-5 space-y-1.5 text-muted-foreground">
+            <li>Create a new Lovable project → <em>Import from GitHub</em> → pick your repo.</li>
+            <li>Or run it locally: <code className="text-xs px-1.5 py-0.5 rounded bg-muted">git clone …</code> → <code className="text-xs px-1.5 py-0.5 rounded bg-muted">npm install</code> → <code className="text-xs px-1.5 py-0.5 rounded bg-muted">npm run dev</code>.</li>
+            <li>Restore the database using the JSON backup below.</li>
+          </ol>
+
+          <a
+            href="https://docs.lovable.dev/integrations/git"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-primary hover:underline text-sm pt-1"
+          >
+            Open GitHub integration docs <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+          <strong className="text-foreground">Full disaster recovery =</strong> GitHub ZIP (all code) <strong>+</strong> the JSON backup below (all data). Keep both and you can rebuild ShareKart from scratch anytime.
+        </div>
+      </div>
+
+
       {/* Backup */}
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
         <div className="flex items-start gap-3">
