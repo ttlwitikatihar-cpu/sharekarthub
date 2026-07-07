@@ -179,6 +179,7 @@ const Admin = () => {
                     </div>
                   </div>
                 )}
+                {activeTab === "analytics" && <AdminAnalyticsTab />}
                 {activeTab === "users" && <AdminUsersTab users={users} currentUserId={user?.id} logAction={logAction} />}
                 {activeTab === "listings" && <AdminListingsTab listings={listings} logAction={logAction} />}
                 {activeTab === "orders" && <AdminOrdersTab orders={orders} logAction={logAction} />}
