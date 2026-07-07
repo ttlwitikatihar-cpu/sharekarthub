@@ -111,6 +111,7 @@ const Admin = () => {
 
   const tabTitles: Record<string, string> = {
     dashboard: "Dashboard Overview",
+    analytics: "Website Analytics",
     users: "User Management",
     listings: "Listing Management",
     orders: "Order Management",
