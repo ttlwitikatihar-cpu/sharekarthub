@@ -20,6 +20,7 @@ import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminSettingsTab from "@/components/admin/AdminSettingsTab";
 import AdminTicketsTab from "@/components/admin/AdminTicketsTab";
 import AdminBackupTab from "@/components/admin/AdminBackupTab";
+import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
 
 const Admin = () => {
   const { user } = useAuth();
