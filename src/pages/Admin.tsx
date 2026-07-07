@@ -20,6 +20,7 @@ import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminSettingsTab from "@/components/admin/AdminSettingsTab";
 import AdminTicketsTab from "@/components/admin/AdminTicketsTab";
 import AdminBackupTab from "@/components/admin/AdminBackupTab";
+import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
 
 const Admin = () => {
   const { user } = useAuth();
@@ -110,6 +111,7 @@ const Admin = () => {
 
   const tabTitles: Record<string, string> = {
     dashboard: "Dashboard Overview",
+    analytics: "Website Analytics",
     users: "User Management",
     listings: "Listing Management",
     orders: "Order Management",
@@ -177,6 +179,7 @@ const Admin = () => {
                     </div>
                   </div>
                 )}
+                {activeTab === "analytics" && <AdminAnalyticsTab />}
                 {activeTab === "users" && <AdminUsersTab users={users} currentUserId={user?.id} logAction={logAction} />}
                 {activeTab === "listings" && <AdminListingsTab listings={listings} logAction={logAction} />}
                 {activeTab === "orders" && <AdminOrdersTab orders={orders} logAction={logAction} />}
