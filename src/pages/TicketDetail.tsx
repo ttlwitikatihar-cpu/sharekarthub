@@ -117,6 +117,7 @@ const TicketDetail = () => {
       ticket_id: ticket.id,
       sender_id: user.id,
       message: text,
+      // is_admin_reply is enforced server-side via trigger; only admins can set it true
       is_admin_reply: !!isAdmin && !isRaiser && !isOpponent,
     });
     // Bump status to reflect activity
