@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, ShoppingCart, Flag, LifeBuoy, ScrollText, Settings, DatabaseBackup } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, Flag, LifeBuoy, ScrollText, Settings, DatabaseBackup, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +12,7 @@ import {
 
 const items = [
   { title: "Dashboard", value: "dashboard", icon: LayoutDashboard },
+  { title: "Analytics", value: "analytics", icon: BarChart3 },
   { title: "Users", value: "users", icon: Users },
   { title: "Listings", value: "listings", icon: Package },
   { title: "Orders", value: "orders", icon: ShoppingCart },
