@@ -292,6 +292,8 @@ export type Database = {
         Row: {
           commission_enabled: boolean
           id: string
+          maintenance_message: string | null
+          maintenance_mode: boolean
           rent_commission_rate: number
           sell_commission_rate: number
           singleton: boolean
@@ -300,6 +302,8 @@ export type Database = {
         Insert: {
           commission_enabled?: boolean
           id?: string
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
           rent_commission_rate?: number
           sell_commission_rate?: number
           singleton?: boolean
@@ -308,6 +312,8 @@ export type Database = {
         Update: {
           commission_enabled?: boolean
           id?: string
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
           rent_commission_rate?: number
           sell_commission_rate?: number
           singleton?: boolean
