@@ -26,6 +26,9 @@ import Disputes from "./pages/trust/Disputes";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import NotFound from "./pages/NotFound";
+import MaintenanceGuard from "./components/MaintenanceGuard";
+
+
 
 const queryClient = new QueryClient();
 
@@ -36,7 +39,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <MaintenanceGuard>
           <Routes>
+
             <Route path="/" element={<Index />} />
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/list-item" element={<ListItem />} />
@@ -60,7 +65,9 @@ const App = () => (
             <Route path="/trust/disputes" element={<Disputes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </MaintenanceGuard>
         </AuthProvider>
+
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

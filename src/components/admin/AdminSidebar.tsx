@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, ShoppingCart, Flag, LifeBuoy, ScrollText, Settings, DatabaseBackup, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, Flag, LifeBuoy, ScrollText, Settings, DatabaseBackup, BarChart3, ShieldAlert, Power } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,11 +16,14 @@ const items = [
   { title: "Users", value: "users", icon: Users },
   { title: "Listings", value: "listings", icon: Package },
   { title: "Orders", value: "orders", icon: ShoppingCart },
+  { title: "Fraud Detection", value: "fraud", icon: ShieldAlert },
   { title: "Reports", value: "reports", icon: Flag },
   { title: "Tickets", value: "tickets", icon: LifeBuoy },
   { title: "Activity Logs", value: "logs", icon: ScrollText },
   { title: "Backup & Restore", value: "backup", icon: DatabaseBackup },
+  { title: "Maintenance", value: "maintenance", icon: Power },
   { title: "Settings", value: "settings", icon: Settings },
+
 ];
 
 interface AdminSidebarProps {

@@ -21,6 +21,9 @@ import AdminSettingsTab from "@/components/admin/AdminSettingsTab";
 import AdminTicketsTab from "@/components/admin/AdminTicketsTab";
 import AdminBackupTab from "@/components/admin/AdminBackupTab";
 import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
+import AdminFraudTab from "@/components/admin/AdminFraudTab";
+import AdminMaintenanceTab from "@/components/admin/AdminMaintenanceTab";
+
 
 const Admin = () => {
   const { user } = useAuth();
@@ -115,12 +118,15 @@ const Admin = () => {
     users: "User Management",
     listings: "Listing Management",
     orders: "Order Management",
+    fraud: "Fraud Detection",
     reports: "Reports & Complaints",
     tickets: "Support Tickets",
     logs: "Activity Logs",
     backup: "Backup & Restore",
+    maintenance: "Emergency Maintenance",
     settings: "Platform Settings",
   };
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -183,11 +189,15 @@ const Admin = () => {
                 {activeTab === "users" && <AdminUsersTab users={users} currentUserId={user?.id} logAction={logAction} />}
                 {activeTab === "listings" && <AdminListingsTab listings={listings} logAction={logAction} />}
                 {activeTab === "orders" && <AdminOrdersTab orders={orders} logAction={logAction} />}
+                {activeTab === "fraud" && <AdminFraudTab />}
                 {activeTab === "reports" && <AdminReportsTab userId={user?.id} logAction={logAction} />}
+
                 {activeTab === "tickets" && <AdminTicketsTab />}
                 {activeTab === "logs" && <AdminLogsTab />}
                 {activeTab === "backup" && <AdminBackupTab />}
+                {activeTab === "maintenance" && <AdminMaintenanceTab logAction={logAction} />}
                 {activeTab === "settings" && <AdminSettingsTab />}
+
               </motion.div>
             </div>
           </main>
