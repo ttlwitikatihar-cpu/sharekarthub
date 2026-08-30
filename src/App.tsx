@@ -44,6 +44,7 @@ const App = () => (
           <Routes>
 
             <Route path="/" element={<Index />} />
+            <Route path="/c/:slug" element={<Category />} />
             <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/list-item" element={<ListItem />} />
             <Route path="/edit-listing/:id" element={<EditListing />} />
