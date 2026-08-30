@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileCheck, FileX, UserX, CheckCircle, Search, ChevronDown, ChevronUp, Activity, Package, ShoppingCart, Star, Ban, AlertTriangle, LogIn, LogOut, Clock } from "lucide-react";
+import { FileCheck, FileX, UserX, CheckCircle, Search, ChevronDown, ChevronUp, Activity, Package, ShoppingCart, Star, Ban, AlertTriangle, LogIn, LogOut, Clock, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
-  const [confirmAction, setConfirmAction] = useState<{ userId: string; name: string; action: "suspend" | "fraud" } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ userId: string; name: string; action: "suspend" | "fraud" | "delete" } | null>(null);
   const [fraudReason, setFraudReason] = useState("");
 
   // Fetch activity for expanded user (includes login/logout)
@@ -135,6 +135,24 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
     },
   });
 
+  const accountAction = useMutation({
+    mutationFn: async ({ userId, action }: { userId: string; action: "restore" | "delete" }) => {
+      const { data, error } = await supabase.functions.invoke("admin-user-action", {
+        body: { targetUserId: userId, action },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
+      logAction(`${vars.action}_user`, "user", vars.userId, `Account ${vars.action}d by admin`);
+      toast({ title: vars.action === "delete" ? "Account permanently removed" : "Account restored", description: vars.action === "restore" ? "Suspended listings were restored too." : undefined });
+      setConfirmAction(null);
+    },
+    onError: (error: Error) => toast({ title: "Admin action failed", description: error.message, variant: "destructive" }),
+  });
+
   // Separate login activity
   const loginActivity = userActivity.filter((a: any) => a.action === "login" || a.action === "logout");
   const otherActivity = userActivity.filter((a: any) => a.action !== "login" && a.action !== "logout");
@@ -218,8 +236,13 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
                     </>
                   )}
                   {u.kyc_status === "banned" && (
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => updateKyc.mutate({ userId: u.user_id, status: "unverified" })}>
+                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => accountAction.mutate({ userId: u.user_id, action: "restore" })} disabled={accountAction.isPending}>
                       <CheckCircle className="h-3.5 w-3.5" /> Unban
+                    </Button>
+                  )}
+                  {u.user_id !== currentUserId && (
+                    <Button size="sm" variant="outline" className="text-xs gap-1 text-destructive" onClick={() => setConfirmAction({ userId: u.user_id, name: u.full_name || "User", action: "delete" })}>
+                      <Trash2 className="h-3.5 w-3.5" /> Remove
                     </Button>
                   )}
                 </div>
@@ -381,7 +404,7 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
             <DialogTitle>
               {confirmAction?.action === "fraud" 
                 ? `🚨 Flag "${confirmAction?.name}" as Fraud?` 
-                : `Suspend "${confirmAction?.name}"?`}
+                : confirmAction?.action === "delete" ? `Remove "${confirmAction?.name}" permanently?` : `Suspend "${confirmAction?.name}"?`}
             </DialogTitle>
           </DialogHeader>
           {confirmAction?.action === "fraud" ? (
@@ -393,6 +416,8 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
                 onChange={e => setFraudReason(e.target.value)} 
               />
             </div>
+          ) : confirmAction?.action === "delete" ? (
+            <p className="text-sm text-muted-foreground">This permanently removes the account, listings, orders, messages, and activity history. This cannot be undone.</p>
           ) : (
             <p className="text-sm text-muted-foreground">This will suspend the account and all their listings.</p>
           )}
@@ -400,17 +425,19 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
             <Button variant="outline" onClick={() => { setConfirmAction(null); setFraudReason(""); }}>Cancel</Button>
             <Button 
               variant="destructive" 
-              disabled={confirmAction?.action === "fraud" && !fraudReason.trim()}
+              disabled={(confirmAction?.action === "fraud" && !fraudReason.trim()) || accountAction.isPending}
               onClick={() => {
                 if (!confirmAction) return;
                 if (confirmAction.action === "fraud") {
                   flagFraud.mutate({ userId: confirmAction.userId, reason: fraudReason });
+                } else if (confirmAction.action === "delete") {
+                  accountAction.mutate({ userId: confirmAction.userId, action: "delete" });
                 } else {
                   suspendUser.mutate({ userId: confirmAction.userId });
                 }
               }}
             >
-              {confirmAction?.action === "fraud" ? "Flag as Fraud" : "Suspend Account"}
+              {confirmAction?.action === "fraud" ? "Flag as Fraud" : confirmAction?.action === "delete" ? "Remove Permanently" : "Suspend Account"}
             </Button>
           </DialogFooter>
         </DialogContent>
