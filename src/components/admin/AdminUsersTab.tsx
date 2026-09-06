@@ -91,54 +91,10 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
     },
   });
 
-  const suspendUser = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
-      // Suspend all active listings
-      await supabase.from("listings").update({ status: "suspended" }).eq("user_id", userId);
-      const { error } = await supabase.from("profiles").update({ 
-        kyc_status: "banned", 
-        bio: reason ? `[Suspended: ${reason}]` : "[Account suspended by admin]" 
-      }).eq("user_id", userId);
-      if (error) throw error;
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
-      logAction("suspend_user", "user", vars.userId, vars.reason || "User account suspended");
-      toast({ title: "User account suspended", description: "All their listings have been suspended." });
-      setConfirmAction(null);
-      setFraudReason("");
-    },
-  });
-
-  const flagFraud = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      // Suspend all listings
-      await supabase.from("listings").update({ status: "suspended" }).eq("user_id", userId);
-      // Ban user
-      const { error } = await supabase.from("profiles").update({ 
-        kyc_status: "banned", 
-        bio: `[FRAUD - ${reason}]` 
-      }).eq("user_id", userId);
-      if (error) throw error;
-      // Cancel all pending/active orders
-      await supabase.from("orders").update({ status: "cancelled" }).eq("seller_id", userId).in("status", ["pending", "active"]);
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      logAction("flag_fraud", "user", vars.userId, `Flagged as fraud: ${vars.reason}`);
-      toast({ title: "User flagged as fraud", description: "Account banned, listings suspended, orders cancelled.", variant: "destructive" });
-      setConfirmAction(null);
-      setFraudReason("");
-    },
-  });
-
   const accountAction = useMutation({
-    mutationFn: async ({ userId, action }: { userId: string; action: "restore" | "delete" }) => {
+    mutationFn: async ({ userId, action, reason }: { userId: string; action: "suspend" | "fraud" | "restore" | "delete"; reason?: string }) => {
       const { data, error } = await supabase.functions.invoke("admin-user-action", {
-        body: { targetUserId: userId, action },
+        body: { targetUserId: userId, action, reason },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -146,9 +102,15 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
-      logAction(`${vars.action}_user`, "user", vars.userId, `Account ${vars.action}d by admin`);
-      toast({ title: vars.action === "delete" ? "Account permanently removed" : "Account restored", description: vars.action === "restore" ? "Suspended listings were restored too." : undefined });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      logAction(`${vars.action}_user`, "user", vars.userId, vars.reason || `Account ${vars.action}d by admin`);
+      toast({
+        title: vars.action === "delete" ? "Account permanently removed" : vars.action === "restore" ? "Account restored" : vars.action === "fraud" ? "User flagged as fraud" : "User account suspended",
+        description: vars.action === "restore" ? "Suspended listings were restored too." : vars.action === "fraud" ? "Account banned, listings suspended, orders cancelled." : vars.action === "suspend" ? "All their listings have been suspended." : undefined,
+        variant: vars.action === "fraud" || vars.action === "delete" ? "destructive" : undefined,
+      });
       setConfirmAction(null);
+      setFraudReason("");
     },
     onError: (error: Error) => toast({ title: "Admin action failed", description: error.message, variant: "destructive" }),
   });
@@ -429,11 +391,11 @@ const AdminUsersTab = ({ users, currentUserId, logAction }: AdminUsersTabProps) 
               onClick={() => {
                 if (!confirmAction) return;
                 if (confirmAction.action === "fraud") {
-                  flagFraud.mutate({ userId: confirmAction.userId, reason: fraudReason });
+                  accountAction.mutate({ userId: confirmAction.userId, action: "fraud", reason: fraudReason });
                 } else if (confirmAction.action === "delete") {
                   accountAction.mutate({ userId: confirmAction.userId, action: "delete" });
                 } else {
-                  suspendUser.mutate({ userId: confirmAction.userId });
+                  accountAction.mutate({ userId: confirmAction.userId, action: "suspend" });
                 }
               }}
             >

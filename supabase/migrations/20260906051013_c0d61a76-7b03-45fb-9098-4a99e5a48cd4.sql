@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_kyc_status_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_kyc_status_check CHECK (kyc_status IN ('unverified', 'pending', 'verified', 'rejected', 'banned'));
