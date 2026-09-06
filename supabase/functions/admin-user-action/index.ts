@@ -1,10 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { z } from "npm:zod@3";
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -36,17 +32,18 @@ Deno.serve(async (req) => {
     });
     if (roleError || !isAdmin) return json({ error: "Forbidden — admin only" }, 403);
 
-    const body = await req.json();
-    const targetUserId = typeof body?.targetUserId === "string" ? body.targetUserId : "";
-    const action = body?.action;
-    if (!targetUserId || !["suspend", "restore", "delete"].includes(action)) {
-      return json({ error: "A valid targetUserId and action are required" }, 400);
-    }
+    const parsed = z.object({
+      targetUserId: z.string().uuid(),
+      action: z.enum(["suspend", "fraud", "restore", "delete"]),
+      reason: z.string().trim().max(500).optional(),
+    }).safeParse(await req.json());
+    if (!parsed.success) return json({ error: "A valid targetUserId and action are required" }, 400);
+    const { targetUserId, action, reason } = parsed.data;
     if (targetUserId === authData.user.id) return json({ error: "You cannot manage your own admin account" }, 400);
 
     const admin = createClient(url, serviceKey);
 
-    if (action === "suspend") {
+    if (action === "suspend" || action === "fraud") {
       const { error: listingError } = await admin
         .from("listings")
         .update({ status: "suspended" })
@@ -56,9 +53,24 @@ Deno.serve(async (req) => {
 
       const { error: profileError } = await admin
         .from("profiles")
-        .update({ kyc_status: "banned" })
+        .update({
+          kyc_status: "banned",
+          bio: action === "fraud"
+            ? `[FRAUD - ${reason || "Flagged by admin"}]`
+            : reason
+              ? `[Suspended: ${reason}]`
+              : "[Account suspended by admin]",
+        })
         .eq("user_id", targetUserId);
       if (profileError) throw profileError;
+      if (action === "fraud") {
+        const { error: orderError } = await admin
+          .from("orders")
+          .update({ status: "cancelled" })
+          .eq("seller_id", targetUserId)
+          .in("status", ["pending", "active"]);
+        if (orderError) throw orderError;
+      }
       return json({ ok: true, action, targetUserId });
     }
 
@@ -78,12 +90,13 @@ Deno.serve(async (req) => {
       return json({ ok: true, action, targetUserId });
     }
 
-    // Remove user-owned data first so historical foreign-key references do not
+    // Remove dependent data first so historical foreign-key references do not
     // prevent auth.admin.deleteUser. This is intentionally irreversible.
-    const { data: tickets } = await admin
+    const { data: tickets, error: ticketLookupError } = await admin
       .from("support_tickets")
       .select("id")
       .or(`raised_by.eq.${targetUserId},against_user_id.eq.${targetUserId}`);
+    if (ticketLookupError) throw ticketLookupError;
     const ticketIds = (tickets ?? []).map((ticket) => ticket.id);
     if (ticketIds.length > 0) {
       const { error } = await admin.from("ticket_messages").delete().in("ticket_id", ticketIds);
@@ -92,12 +105,48 @@ Deno.serve(async (req) => {
       if (ticketError) throw ticketError;
     }
 
+    const { data: conversations, error: conversationLookupError } = await admin
+      .from("conversations")
+      .select("id")
+      .or(`buyer_id.eq.${targetUserId},seller_id.eq.${targetUserId}`);
+    if (conversationLookupError) throw conversationLookupError;
+    const conversationIds = (conversations ?? []).map((conversation) => conversation.id);
+    if (conversationIds.length > 0) {
+      const { error } = await admin.from("messages").delete().in("conversation_id", conversationIds);
+      if (error) throw error;
+      const { error: conversationError } = await admin.from("conversations").delete().in("id", conversationIds);
+      if (conversationError) throw conversationError;
+    }
+
+    const { data: listings, error: listingLookupError } = await admin
+      .from("listings")
+      .select("id")
+      .eq("user_id", targetUserId);
+    if (listingLookupError) throw listingLookupError;
+    const listingIds = (listings ?? []).map((listing) => listing.id);
+
+    const { data: orders, error: orderLookupError } = await admin
+      .from("orders")
+      .select("id")
+      .or(`buyer_id.eq.${targetUserId},seller_id.eq.${targetUserId}`);
+    if (orderLookupError) throw orderLookupError;
+    const orderIds = (orders ?? []).map((order) => order.id);
+    if (orderIds.length > 0) {
+      const { error } = await admin.from("notifications").delete().in("order_id", orderIds);
+      if (error) throw error;
+    }
+    if (listingIds.length > 0) {
+      const { error: listingReviewError } = await admin.from("reviews").delete().in("listing_id", listingIds);
+      if (listingReviewError) throw listingReviewError;
+      const { error: listingReportError } = await admin.from("reports").delete().in("reported_listing_id", listingIds);
+      if (listingReportError) throw listingReportError;
+    }
+
     const deleteBy = async (table: string, column: string) => {
       const { error } = await admin.from(table).delete().eq(column, targetUserId);
       if (error) throw error;
     };
 
-    await deleteBy("messages", "sender_id");
     await deleteBy("notifications", "user_id");
     await deleteBy("cart_items", "user_id");
     await deleteBy("wishlist_items", "user_id");
@@ -105,8 +154,6 @@ Deno.serve(async (req) => {
     await deleteBy("reviews", "reviewer_id");
     await deleteBy("reports", "reported_by");
     await deleteBy("reports", "reported_user_id");
-    await deleteBy("conversations", "buyer_id");
-    await deleteBy("conversations", "seller_id");
     await deleteBy("orders", "buyer_id");
     await deleteBy("orders", "seller_id");
     await deleteBy("listings", "user_id");
