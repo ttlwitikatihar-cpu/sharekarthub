@@ -134,6 +134,18 @@ Deno.serve(async (req) => {
     if (orderIds.length > 0) {
       const { error } = await admin.from("notifications").delete().in("order_id", orderIds);
       if (error) throw error;
+      const { data: orderTickets, error: orderTicketLookupError } = await admin
+        .from("support_tickets")
+        .select("id")
+        .in("order_id", orderIds);
+      if (orderTicketLookupError) throw orderTicketLookupError;
+      const orderTicketIds = (orderTickets ?? []).map((ticket) => ticket.id);
+      if (orderTicketIds.length > 0) {
+        const { error: orderMessageError } = await admin.from("ticket_messages").delete().in("ticket_id", orderTicketIds);
+        if (orderMessageError) throw orderMessageError;
+        const { error: orderTicketError } = await admin.from("support_tickets").delete().in("id", orderTicketIds);
+        if (orderTicketError) throw orderTicketError;
+      }
     }
     if (listingIds.length > 0) {
       const { error: listingReviewError } = await admin.from("reviews").delete().in("listing_id", listingIds);
