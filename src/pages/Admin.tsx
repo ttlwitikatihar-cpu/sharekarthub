@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Shield, AlertTriangle } from "lucide-react";
@@ -97,7 +97,11 @@ const Admin = () => {
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["admin-orders"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(500);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, listings(title, category, price)")
+        .order("created_at", { ascending: false })
+        .limit(500);
       if (error) throw error;
       return data;
     },
