@@ -27,6 +27,7 @@ const AdminFraudTab = () => {
       const { data } = await supabase.rpc("admin_list_profiles");
       return (data as any[]) || [];
     },
+    staleTime: 60_000,
   });
 
   const { data: reports = [] } = useQuery({
@@ -35,6 +36,7 @@ const AdminFraudTab = () => {
       const { data } = await (supabase as any).from("reports").select("reported_user_id, status, reason, created_at");
       return data || [];
     },
+    staleTime: 60_000,
   });
 
   const { data: orders = [] } = useQuery({
@@ -43,14 +45,16 @@ const AdminFraudTab = () => {
       const { data } = await supabase.from("orders").select("id, seller_id, buyer_id, status, created_at, listing_id");
       return data || [];
     },
+    staleTime: 60_000,
   });
 
   const { data: listings = [] } = useQuery({
     queryKey: ["fraud-listings"],
     queryFn: async () => {
-      const { data } = await supabase.from("listings").select("id, user_id, status, created_at");
+      const { data } = await supabase.from("listings").select("id, user_id, status").limit(10000);
       return data || [];
     },
+    staleTime: 60_000,
   });
 
   // Detect duplicate phone/ID

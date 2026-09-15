@@ -23,7 +23,11 @@ const AdminTicketsTab = () => {
   const { data: tickets = [], isLoading } = useQuery({
     queryKey: ["admin-tickets"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("support_tickets").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("id, subject, description, status, priority, category, raised_by, against_user_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
       if (error) throw error;
       const userIds = Array.from(new Set((data || []).flatMap((t: any) => [t.raised_by, t.against_user_id])));
       let profileMap = new Map<string, any>();
@@ -37,6 +41,7 @@ const AdminTicketsTab = () => {
         opponent: profileMap.get(t.against_user_id),
       }));
     },
+    staleTime: 30_000,
   });
 
   const filtered = useMemo(() => {

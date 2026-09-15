@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,20 +9,26 @@ const AdminLogsTab = () => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("admin_logs")
-        .select("*")
+        .select("id, admin_id, action, target_type, details, created_at")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
       return data;
     },
+    staleTime: 30_000,
   });
 
+  const adminIds = useMemo(() => Array.from(new Set(logs.map((log: any) => log.admin_id).filter(Boolean))), [logs]);
   const { data: profiles = [] } = useQuery({
-    queryKey: ["admin-log-profiles"],
+    queryKey: ["admin-log-profiles", adminIds],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("user_id, full_name");
-      return data || [];
+      if (!adminIds.length) return [];
+      const { data, error } = await supabase.rpc("admin_get_profiles", { _user_ids: adminIds });
+      if (error) throw error;
+      return (data as any[]) || [];
     },
+    enabled: adminIds.length > 0,
+    staleTime: 60_000,
   });
 
   const getName = (uid: string) => profiles.find(p => p.user_id === uid)?.full_name || uid.slice(0, 8);
