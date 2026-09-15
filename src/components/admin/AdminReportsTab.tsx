@@ -71,7 +71,11 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
   const { data: reportedListing } = useQuery({
     queryKey: ["admin-reported-listing", expandedItem?.reported_listing_id],
     queryFn: async () => {
-      const { data } = await supabase.from("listings").select("id, title, category, status, price, description, created_at").eq("id", expandedItem!.reported_listing_id).single();
+      const { data } = await supabase
+        .from("listings")
+        .select("id, title, category, status, price, description, created_at, quantity, location, images")
+        .eq("id", expandedItem!.reported_listing_id)
+        .single();
       return data;
     },
     enabled: !!expandedItem?.reported_listing_id,
