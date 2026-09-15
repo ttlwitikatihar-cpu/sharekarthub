@@ -18,7 +18,10 @@ const AdminLogsTab = () => {
     staleTime: 30_000,
   });
 
-  const adminIds = useMemo(() => Array.from(new Set(logs.map((log: any) => log.admin_id).filter(Boolean))), [logs]);
+  const adminIds = useMemo<string[]>(
+    () => Array.from(new Set<string>((logs as any[]).map((log: any) => log.admin_id).filter(Boolean))),
+    [logs],
+  );
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-log-profiles", adminIds],
     queryFn: async () => {
