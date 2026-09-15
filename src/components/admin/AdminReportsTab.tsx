@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Flag, CheckCircle, XCircle, Eye, ChevronDown, ChevronUp, User, Ban, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,19 +28,32 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("reports")
-        .select("*")
+        .select("id, reported_listing_id, reported_user_id, reported_by, reason, details, status, admin_notes, resolved_by, resolved_at, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
+  const profileIds = useMemo<string[]>(
+    () => Array.from(new Set<string>(
+      (reports as any[])
+        .flatMap((report: any) => [report.reported_user_id, report.reported_by, report.resolved_by])
+        .filter(Boolean),
+    )),
+    [reports],
+  );
+
   const { data: profiles = [] } = useQuery({
-    queryKey: ["admin-report-profiles"],
+    queryKey: ["admin-report-profiles", profileIds],
     queryFn: async () => {
-      const { data } = await supabase.rpc("admin_list_profiles");
-      return ((data as any[]) || []);
+      if (!profileIds.length) return [];
+      const { data, error } = await supabase.rpc("admin_get_profiles", { _user_ids: profileIds });
+      if (error) throw error;
+      return (data as any[]) || [];
     },
+    enabled: profileIds.length > 0,
+    staleTime: 60_000,
   });
 
   const getName = (uid: string | null) => {
@@ -58,7 +71,7 @@ const AdminReportsTab = ({ userId, logAction }: AdminReportsTabProps) => {
   const { data: reportedListing } = useQuery({
     queryKey: ["admin-reported-listing", expandedItem?.reported_listing_id],
     queryFn: async () => {
-      const { data } = await supabase.from("listings").select("*").eq("id", expandedItem!.reported_listing_id).single();
+      const { data } = await supabase.from("listings").select("id, title, category, status, price, description, created_at").eq("id", expandedItem!.reported_listing_id).single();
       return data;
     },
     enabled: !!expandedItem?.reported_listing_id,
