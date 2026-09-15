@@ -37,7 +37,7 @@ const AdminAnalyticsTab = () => {
     queryKey: ["admin-analytics", range],
     queryFn: async () => {
       const [profiles, listings, orders, activity] = await Promise.all([
-        supabase.rpc("admin_list_profiles"),
+        supabase.from("profiles").select("created_at"),
         supabase.from("listings").select("id, category, listing_type, status, created_at, price"),
         supabase.from("orders").select("id, status, quantity, created_at, listing_id"),
         supabase.from("user_activity").select("id, user_id, action, created_at").gte("created_at", since).limit(10000),
@@ -49,6 +49,7 @@ const AdminAnalyticsTab = () => {
         activity: (activity.data as any[]) || [],
       };
     },
+    staleTime: 60_000,
   });
 
   const stats = useMemo(() => {

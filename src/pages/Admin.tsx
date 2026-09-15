@@ -40,44 +40,73 @@ const Admin = () => {
     enabled: !!user,
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: dashboard, isLoading: dashboardLoading } = useQuery({
+    queryKey: ["admin-dashboard-summary"],
+    queryFn: async () => {
+      const [userCount, listingCount, orderCount, activeOrderCount, pendingReportCount, recentUsers, recentOrders, completedOrders] = await Promise.all([
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }),
+        supabase.from("listings").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["active", "pending"]),
+        (supabase as any).from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("profiles").select("id, full_name, kyc_status").order("created_at", { ascending: false }).limit(5),
+        supabase.from("orders").select("id, status, quantity, created_at, listings(title, price)").order("created_at", { ascending: false }).limit(5),
+        supabase.from("orders").select("quantity, listings(price)").eq("status", "completed").limit(5000),
+      ]);
+
+      return {
+        users: userCount.count || 0,
+        listings: listingCount.count || 0,
+        totalOrders: orderCount.count || 0,
+        activeOrders: activeOrderCount.count || 0,
+        pendingReports: pendingReportCount.count || 0,
+        recentUsers: recentUsers.data || [],
+        recentOrders: recentOrders.data || [],
+        totalRevenue: (completedOrders.data || []).reduce(
+          (sum: number, order: any) => sum + Number(order.listings?.price || 0) * Number(order.quantity || 0),
+          0,
+        ),
+      };
+    },
+    enabled: !!isAdmin && activeTab === "dashboard",
+    staleTime: 30_000,
+  });
+
+  const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_list_profiles");
       if (error) throw error;
       return (data as any[]) || [];
     },
-    enabled: !!isAdmin,
+    enabled: !!isAdmin && activeTab === "users",
+    staleTime: 30_000,
   });
 
-  const { data: listings = [] } = useQuery({
+  const { data: listings = [], isLoading: listingsLoading } = useQuery({
     queryKey: ["admin-listings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("listings").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("listings").select("*").order("created_at", { ascending: false }).limit(500);
       if (error) throw error;
       return data;
     },
-    enabled: !!isAdmin,
+    enabled: !!isAdmin && activeTab === "listings",
+    staleTime: 30_000,
   });
 
-  const { data: orders = [] } = useQuery({
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["admin-orders"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("orders").select("*, listings(title, category, price)").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, listings(title, category, price)")
+        .order("created_at", { ascending: false })
+        .limit(500);
       if (error) throw error;
       return data;
     },
-    enabled: !!isAdmin,
-  });
-
-  const { data: reports = [] } = useQuery({
-    queryKey: ["admin-reports-count"],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any).from("reports").select("status");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!isAdmin,
+    enabled: !!isAdmin && activeTab === "orders",
+    staleTime: 30_000,
   });
 
   const logAction = async (action: string, targetType: string, targetId: string, details: string) => {
@@ -106,11 +135,8 @@ const Admin = () => {
     </div>
   );
 
-  const pendingReports = reports.filter((r: any) => r.status === "pending").length;
-  const totalRevenue = orders.reduce((sum: number, o: any) => {
-    if (o.status === "completed" && o.listings?.price) return sum + Number(o.listings.price) * o.quantity;
-    return sum;
-  }, 0);
+  const pendingReports = dashboard?.pendingReports || 0;
+  const totalRevenue = dashboard?.totalRevenue || 0;
 
   const tabTitles: Record<string, string> = {
     dashboard: "Dashboard Overview",
@@ -146,20 +172,22 @@ const Admin = () => {
 
             <div className="flex-1 p-6 overflow-auto">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-                {activeTab === "dashboard" && (
+                {activeTab === "dashboard" && (dashboardLoading || !dashboard ? (
+                  <div className="text-center py-16 text-muted-foreground">Loading dashboard…</div>
+                ) : (
                   <div className="space-y-6">
                     <AdminDashboardStats
-                      users={users.length}
-                      listings={listings.length}
-                      activeOrders={orders.filter((o: any) => o.status === "active" || o.status === "pending").length}
-                      totalOrders={orders.length}
+                      users={dashboard.users}
+                      listings={dashboard.listings}
+                      activeOrders={dashboard.activeOrders}
+                      totalOrders={dashboard.totalOrders}
                       pendingReports={pendingReports}
                       totalRevenue={totalRevenue}
                     />
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="rounded-xl border border-border bg-card p-5">
                         <h3 className="font-semibold text-sm mb-3">Recent Users</h3>
-                        {users.slice(0, 5).map((u: any) => (
+                        {dashboard.recentUsers.map((u: any) => (
                           <div key={u.id} className="flex items-center gap-2 py-2 border-b border-border last:border-b-0">
                             <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                               {(u.full_name || "?").charAt(0)}
@@ -173,7 +201,7 @@ const Admin = () => {
                       </div>
                       <div className="rounded-xl border border-border bg-card p-5">
                         <h3 className="font-semibold text-sm mb-3">Recent Orders</h3>
-                        {orders.slice(0, 5).map((o: any) => (
+                        {dashboard.recentOrders.map((o: any) => (
                           <div key={o.id} className="flex items-center gap-2 py-2 border-b border-border last:border-b-0">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{o.listings?.title || "Unknown"}</p>
@@ -184,11 +212,11 @@ const Admin = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                ))}
                 {activeTab === "analytics" && <AdminAnalyticsTab />}
-                {activeTab === "users" && <AdminUsersTab users={users} currentUserId={user?.id} logAction={logAction} />}
-                {activeTab === "listings" && <AdminListingsTab listings={listings} logAction={logAction} />}
-                {activeTab === "orders" && <AdminOrdersTab orders={orders} logAction={logAction} />}
+                {activeTab === "users" && (usersLoading ? <div className="text-center py-16 text-muted-foreground">Loading users…</div> : <AdminUsersTab users={users} currentUserId={user?.id} logAction={logAction} />)}
+                {activeTab === "listings" && (listingsLoading ? <div className="text-center py-16 text-muted-foreground">Loading listings…</div> : <AdminListingsTab listings={listings} logAction={logAction} />)}
+                {activeTab === "orders" && (ordersLoading ? <div className="text-center py-16 text-muted-foreground">Loading orders…</div> : <AdminOrdersTab orders={orders} logAction={logAction} />)}
                 {activeTab === "fraud" && <AdminFraudTab />}
                 {activeTab === "reports" && <AdminReportsTab userId={user?.id} logAction={logAction} />}
 
