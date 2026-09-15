@@ -79,13 +79,32 @@ const AdminFraudTab = () => {
   }, [users]);
 
   const scored = useMemo(() => {
+    const reportCountByUser = new Map<string, number>();
+    reports.forEach((report: any) => {
+      if (report.reported_user_id) reportCountByUser.set(report.reported_user_id, (reportCountByUser.get(report.reported_user_id) || 0) + 1);
+    });
+    const sellerOrderStats = new Map<string, { cancelled: number }>();
+    orders.forEach((order: any) => {
+      if (!order.seller_id) return;
+      const stats = sellerOrderStats.get(order.seller_id) || { cancelled: 0 };
+      if (order.status === "cancelled") stats.cancelled += 1;
+      sellerOrderStats.set(order.seller_id, stats);
+    });
+    const listingStats = new Map<string, { total: number; suspended: number }>();
+    listings.forEach((listing: any) => {
+      if (!listing.user_id) return;
+      const stats = listingStats.get(listing.user_id) || { total: 0, suspended: 0 };
+      stats.total += 1;
+      if (listing.status === "suspended") stats.suspended += 1;
+      listingStats.set(listing.user_id, stats);
+    });
+
     return users
       .map((u: any) => {
-        const reportsAgainst = reports.filter((r: any) => r.reported_user_id === u.user_id);
-        const sellerOrders = orders.filter((o: any) => o.seller_id === u.user_id);
-        const cancelled = sellerOrders.filter((o: any) => o.status === "cancelled").length;
-        const userListings = listings.filter((l: any) => l.user_id === u.user_id);
-        const suspendedListings = userListings.filter((l: any) => l.status === "suspended").length;
+        const reportsAgainst = reportCountByUser.get(u.user_id) || 0;
+        const cancelled = sellerOrderStats.get(u.user_id)?.cancelled || 0;
+        const userListingStats = listingStats.get(u.user_id) || { total: 0, suspended: 0 };
+        const suspendedListings = userListingStats.suspended;
         const isDupPhone = u.phone && dupPhones.has(u.phone);
         const isDupId = u.id_number && dupIds.has(u.id_number);
 
@@ -93,13 +112,13 @@ const AdminFraudTab = () => {
         const reasons: string[] = [];
 
         if (u.kyc_status === "banned") { score += 100; reasons.push("Banned account"); }
-        if (reportsAgainst.length >= 3) { score += 40; reasons.push(`${reportsAgainst.length} reports filed`); }
-        else if (reportsAgainst.length > 0) { score += reportsAgainst.length * 10; reasons.push(`${reportsAgainst.length} report(s)`); }
+        if (reportsAgainst >= 3) { score += 40; reasons.push(`${reportsAgainst} reports filed`); }
+        else if (reportsAgainst > 0) { score += reportsAgainst * 10; reasons.push(`${reportsAgainst} report(s)`); }
         if (cancelled >= 5) { score += 30; reasons.push(`${cancelled} cancelled orders`); }
         else if (cancelled >= 2) { score += 15; reasons.push(`${cancelled} cancelled orders`); }
         if (suspendedListings > 0) { score += suspendedListings * 8; reasons.push(`${suspendedListings} suspended listings`); }
         if (u.total_reviews >= 5 && Number(u.rating) < 2.5) { score += 25; reasons.push(`Low rating (${u.rating}⭐)`); }
-        if (u.kyc_status === "unverified" && userListings.length >= 5) { score += 20; reasons.push("Unverified w/ many listings"); }
+        if (u.kyc_status === "unverified" && userListingStats.total >= 5) { score += 20; reasons.push("Unverified w/ many listings"); }
         if (u.kyc_status === "rejected") { score += 30; reasons.push("KYC rejected"); }
         if (isDupPhone) { score += 35; reasons.push(`Duplicate phone (${dupPhones.get(u.phone)?.length} accounts)`); }
         if (isDupId) { score += 50; reasons.push(`Duplicate ID number (${dupIds.get(u.id_number)?.length} accounts)`); }
@@ -109,9 +128,9 @@ const AdminFraudTab = () => {
           ...u,
           fraudScore: Math.min(100, score),
           reasons,
-          reportsCount: reportsAgainst.length,
+          reportsCount: reportsAgainst,
           cancelledCount: cancelled,
-          listingsCount: userListings.length,
+          listingsCount: userListingStats.total,
         };
       })
       .filter((u: any) => u.fraudScore >= minScore)
