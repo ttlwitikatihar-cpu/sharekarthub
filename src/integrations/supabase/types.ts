@@ -100,6 +100,7 @@ export type Database = {
           price: number | null
           quantity: number
           security_deposit: number | null
+          service_subcategory: string | null
           status: string
           title: string
           updated_at: string
@@ -120,6 +121,7 @@ export type Database = {
           price?: number | null
           quantity?: number
           security_deposit?: number | null
+          service_subcategory?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -140,6 +142,7 @@ export type Database = {
           price?: number | null
           quantity?: number
           security_deposit?: number | null
+          service_subcategory?: string | null
           status?: string
           title?: string
           updated_at?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS service_subcategory text; CREATE INDEX IF NOT EXISTS listings_service_subcategory_idx ON public.listings (service_subcategory) WHERE listing_type = 'service';
