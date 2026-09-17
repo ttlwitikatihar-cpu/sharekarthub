@@ -24,10 +24,10 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
+  const listingType = (item as any).listing_type as string | undefined;
   const cat = listingType === "service" ? categoryConfig.service : categoryConfig[item.category] || categoryConfig.sell;
   const CatIcon = cat.icon;
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
-  const listingType = (item as any).listing_type as string | undefined;
   const isDonation = item.category === "donate";
   const { user } = useAuth();
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
