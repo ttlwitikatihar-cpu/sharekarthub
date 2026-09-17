@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, MapPin, ArrowUpDown, Navigation, PackageSearch, Store, ChevronRight, LayoutGrid, Rows3 } from "lucide-react";
+import { Search, MapPin, ArrowUpDown, Navigation, PackageSearch, Store, ChevronRight, LayoutGrid, Rows3, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { CATEGORY_DEFS, getCategory } from "@/lib/categories";
 import { useListings, useSellerMap } from "@/hooks/use-listings";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 import { cn } from "@/lib/utils";
+import { SERVICE_CATEGORIES, getServiceCategory, getServiceCategoryLabel } from "@/lib/services";
 
 type Sort = "nearest" | "popular" | "price-asc" | "price-desc" | "newest";
 
@@ -27,6 +28,7 @@ const Category = () => {
   const [sortBy, setSortBy] = useState<Sort>("nearest");
   const [hideOutOfStock, setHideOutOfStock] = useState(false);
   const [dense, setDense] = useState(false);
+  const [serviceFilter, setServiceFilter] = useState(() => new URLSearchParams(window.location.search).get("service") || "all");
 
   const { position, loading: geoLoading, requestLocation } = useGeolocation(true);
   const { data: listings = [], isLoading, error } = useListings();
@@ -40,7 +42,8 @@ const Category = () => {
   const items = useMemo(() => {
     if (!def) return [];
     let list = listings.filter(def.match);
-    if (search) list = list.filter((i) => i.title.toLowerCase().includes(search.toLowerCase()));
+    if (serviceFilter !== "all") list = list.filter((i) => i.service_subcategory === serviceFilter);
+    if (search) list = list.filter((i) => `${i.title} ${i.description || ""}`.toLowerCase().includes(search.toLowerCase()));
     if (location) list = list.filter((i) => i.location?.toLowerCase().includes(location.toLowerCase()));
     if (shopSearch) {
       const q = shopSearch.toLowerCase();
@@ -71,11 +74,13 @@ const Category = () => {
     }
     // keep out-of-stock visible but pushed to the end
     return sorted.sort((a, b) => Number(a.status === "out_of_stock") - Number(b.status === "out_of_stock"));
-  }, [listings, def, search, location, shopSearch, hideOutOfStock, sortBy, position, shopMap]);
+  }, [listings, def, search, location, shopSearch, hideOutOfStock, sortBy, position, shopMap, serviceFilter]);
 
   if (!def) return <Navigate to="/" replace />;
 
   const Icon = def.icon;
+  const isServices = def.slug === "service";
+  const selectedService = getServiceCategory(serviceFilter);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,7 +106,7 @@ const Category = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">{def.label}</h1>
-              <p className="text-sm text-muted-foreground">{def.tagline}</p>
+              <p className="text-sm text-muted-foreground">{selectedService?.label ?? def.tagline}</p>
             </div>
           </div>
 
@@ -118,6 +123,20 @@ const Category = () => {
               </Button>
             ))}
           </div>
+
+          {isServices && (
+            <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <Button size="sm" variant={serviceFilter === "all" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("all")}>All services</Button>
+              {SERVICE_CATEGORIES.map((service) => {
+                const ServiceIcon = service.icon;
+                return (
+                  <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 gap-1.5 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                    <ServiceIcon className="h-3.5 w-3.5" /> {service.shortLabel}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -185,9 +204,11 @@ const Category = () => {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {isServices && <Sparkles className="h-4 w-4 text-primary" />}
               <p className="text-sm text-muted-foreground">{items.length} items found</p>
               <Badge variant="secondary" className="text-xs">{def.label}</Badge>
+              {selectedService && <Badge variant="outline" className="text-xs">{getServiceCategoryLabel(serviceFilter)}</Badge>}
             </div>
             <div className={cn("grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3", dense ? "xl:grid-cols-5" : "xl:grid-cols-4")}>
               {items.map((item, i) => (

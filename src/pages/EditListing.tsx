@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
+import { SERVICE_CATEGORIES } from "@/lib/services";
 
 const EditListing = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ const EditListing = () => {
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState("");
   const [listingType, setListingType] = useState("product");
+  const [serviceSubcategory, setServiceSubcategory] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -51,6 +53,7 @@ const EditListing = () => {
       setDescription(listing.description || "");
       setCategory(listing.category);
       setListingType((listing as any).listing_type || "product");
+       setServiceSubcategory((listing as any).service_subcategory || "");
       setPrice(String(listing.price ?? ""));
       setDeposit(String(listing.security_deposit ?? ""));
       setLocation(listing.location || "");
@@ -142,6 +145,7 @@ const EditListing = () => {
         description,
         category,
         listing_type: listingType,
+        service_subcategory: listingType === "service" ? serviceSubcategory || null : null,
         price: category === "donate" ? 0 : Number(price),
         security_deposit: category === "rent" ? Number(deposit) : 0,
         location,
@@ -205,6 +209,18 @@ const EditListing = () => {
                 </Select>
               </div>
             </div>
+
+            {listingType === "service" && (
+              <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <Label>Service category</Label>
+                <Select value={serviceSubcategory} onValueChange={setServiceSubcategory} required>
+                  <SelectTrigger><SelectValue placeholder="Choose the kind of service" /></SelectTrigger>
+                  <SelectContent>
+                    {SERVICE_CATEGORIES.map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
