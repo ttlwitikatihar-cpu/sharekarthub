@@ -19,6 +19,7 @@ import SEO from "@/components/SEO";
 import { useWishlist, shareItem } from "@/lib/wishlist";
 import { calculatePricing, formatINR } from "@/lib/pricing";
 import { usePlatformSettings } from "@/hooks/use-platform-settings";
+import { getServiceCategoryLabel } from "@/lib/services";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -116,7 +117,7 @@ const ItemDetail = () => {
     );
   }
 
-  const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate" };
+  const categoryLabels: Record<string, string> = { rent: "For Rent", sell: "For Sale", donate: "Free / Donate", service: "Service" };
   const profile = (item as any).profile as { full_name: string; avatar_url: string | null; rating: number | null; total_reviews: number | null; kyc_status: string; shop_name: string | null; donations_count: number | null } | null;
   const verified = profile?.kyc_status === "verified";
   const availableQty = item.quantity ?? 0;
@@ -126,6 +127,7 @@ const ItemDetail = () => {
   const avgRating = profile?.rating ? Number(profile.rating) : 0;
   const totalReviews = profile?.total_reviews ?? 0;
   const isDonation = item.category === "donate";
+  const isService = item.listing_type === "service";
 
   const shortDesc = (item.description || `${categoryLabels[item.category] || item.category} on ShareKart.`).slice(0, 155);
   const productLd = {
@@ -180,7 +182,8 @@ const ItemDetail = () => {
 
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-5">
             <div>
-              <Badge variant="secondary" className="mb-2">{categoryLabels[item.category] || item.category}</Badge>
+              <Badge variant="secondary" className="mb-2">{isService ? getServiceCategoryLabel(item.service_subcategory) : categoryLabels[item.category] || item.category}</Badge>
+              {isService && <Badge variant="outline" className="mb-2 ml-2">Local expert</Badge>}
               {outOfStock && <Badge variant="destructive" className="mb-2 ml-2">Out of Stock</Badge>}
               <h1 className="text-2xl md:text-3xl font-bold">{item.title}</h1>
             </div>

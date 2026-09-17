@@ -50,10 +50,10 @@ export const CATEGORY_DEFS: CategoryDef[] = [
     slug: "service",
     label: "Services",
     short: "Services",
-    tagline: "Skilled help from verified locals",
+    tagline: "Book trusted local experts for every job",
     icon: Wrench,
-    tint: "bg-secondary text-secondary-foreground",
-    ring: "hover:ring-primary/30",
+    tint: "bg-accent/15 text-accent",
+    ring: "hover:ring-accent/40",
     match: (i) => i.listing_type === "service",
   },
 ];
