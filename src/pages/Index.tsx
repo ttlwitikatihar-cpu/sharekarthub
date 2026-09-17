@@ -9,10 +9,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import CategoryTiles from "@/components/storefront/CategoryTiles";
+import ServiceCategoryTiles from "@/components/storefront/ServiceCategoryTiles";
 import ProductRail from "@/components/storefront/ProductRail";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 import { useListings, useSellerMap } from "@/hooks/use-listings";
 import { CATEGORY_DEFS } from "@/lib/categories";
+import { SERVICE_CATEGORIES } from "@/lib/services";
 
 const TRUST_POINTS = [
   { icon: ShieldCheck, label: "KYC-verified sellers" },
@@ -58,6 +60,14 @@ const Index = () => {
     return c;
   }, [listings]);
 
+  const serviceCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    SERVICE_CATEGORIES.forEach((service) => {
+      counts[service.slug] = listings.filter((item) => item.listing_type === "service" && item.service_subcategory === service.slug).length;
+    });
+    return counts;
+  }, [listings]);
+
   const inStock = useMemo(
     () => listings.filter((i) => i.status === "active" && (i as any).quantity > 0),
     [listings],
@@ -73,6 +83,7 @@ const Index = () => {
 
   const freeItems = useMemo(() => inStock.filter((i) => i.category === "donate").slice(0, 12), [inStock]);
   const rentItems = useMemo(() => inStock.filter((i) => i.category === "rent").slice(0, 12), [inStock]);
+  const serviceItems = useMemo(() => inStock.filter((i) => i.listing_type === "service").slice(0, 12), [inStock]);
   const trending = useMemo(
     () => [...inStock].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)).slice(0, 12),
     [inStock],
@@ -218,6 +229,17 @@ const Index = () => {
         ) : (
           <>
             <CategoryTiles counts={counts} />
+
+            <ServiceCategoryTiles counts={serviceCounts} />
+
+            <ProductRail
+              title="Services near you"
+              subtitle="Local experts ready to help"
+              icon={<Sparkles className="h-5 w-5 text-primary" />}
+              items={serviceItems}
+              viewAllHref="/c/service"
+              distanceFor={distanceFor}
+            />
 
             <ProductRail
               title="Near you"

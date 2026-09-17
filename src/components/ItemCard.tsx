@@ -7,6 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { getServiceCategoryLabel } from "@/lib/services";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -14,6 +15,7 @@ const categoryConfig: Record<string, { label: string; variant: "default" | "seco
   rent: { label: "For Rent", variant: "default", icon: Clock },
   sell: { label: "For Sale", variant: "secondary", icon: IndianRupee },
   donate: { label: "Free", variant: "outline", icon: Gift },
+  service: { label: "Service", variant: "default", icon: Wrench },
 };
 
 interface ItemCardProps {
@@ -22,7 +24,7 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
-  const cat = categoryConfig[item.category] || categoryConfig.sell;
+  const cat = listingType === "service" ? categoryConfig.service : categoryConfig[item.category] || categoryConfig.sell;
   const CatIcon = cat.icon;
   const outOfStock = item.status === "out_of_stock" || (item as any).quantity <= 0;
   const listingType = (item as any).listing_type as string | undefined;
@@ -75,7 +77,7 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
           </Badge>
           {listingType === "service" && (
             <Badge variant="secondary" className="gap-1 text-xs font-semibold shadow-sm">
-              <Wrench className="h-3 w-3" /> Service
+              <Wrench className="h-3 w-3" /> {getServiceCategoryLabel((item as any).service_subcategory)}
             </Badge>
           )}
         </div>
