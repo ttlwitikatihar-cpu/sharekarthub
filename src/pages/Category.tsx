@@ -29,6 +29,7 @@ const Category = () => {
   const [hideOutOfStock, setHideOutOfStock] = useState(false);
   const [dense, setDense] = useState(false);
   const [serviceFilter, setServiceFilter] = useState(() => new URLSearchParams(window.location.search).get("service") || "all");
+  const isServices = def?.slug === "service";
 
   const { position, loading: geoLoading, requestLocation } = useGeolocation(true);
   const { data: listings = [], isLoading, error } = useListings();
@@ -81,7 +82,6 @@ const Category = () => {
   if (!def) return <Navigate to="/" replace />;
 
   const Icon = def.icon;
-  const isServices = def.slug === "service";
   const selectedService = getServiceCategory(serviceFilter);
   const selectedStandalone = STANDALONE_SERVICES.find((service) => service.slug === serviceFilter);
 
