@@ -77,7 +77,7 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
           </Badge>
           {listingType === "service" && (
             <Badge variant="secondary" className="gap-1 text-xs font-semibold shadow-sm">
-              <Wrench className="h-3 w-3" /> {getServiceCategoryLabel((item as any).service_subcategory)}
+              <Wrench className="h-3 w-3" /> {getServiceCategoryLabel((item as any).service_subcategory || (item as any).service_category)}
             </Badge>
           )}
         </div>

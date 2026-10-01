@@ -182,7 +182,7 @@ const ItemDetail = () => {
 
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-5">
             <div>
-              <Badge variant="secondary" className="mb-2">{isService ? getServiceCategoryLabel(item.service_subcategory) : categoryLabels[item.category] || item.category}</Badge>
+              <Badge variant="secondary" className="mb-2">{isService ? getServiceCategoryLabel(item.service_subcategory || item.service_category) : categoryLabels[item.category] || item.category}</Badge>
               {isService && <Badge variant="outline" className="mb-2 ml-2">Local expert</Badge>}
               {outOfStock && <Badge variant="destructive" className="mb-2 ml-2">Out of Stock</Badge>}
               <h1 className="text-2xl md:text-3xl font-bold">{item.title}</h1>
