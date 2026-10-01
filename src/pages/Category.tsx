@@ -14,7 +14,7 @@ import { CATEGORY_DEFS, getCategory } from "@/lib/categories";
 import { useListings, useSellerMap } from "@/hooks/use-listings";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 import { cn } from "@/lib/utils";
-import { SERVICE_CATEGORIES, getServiceCategory, getServiceCategoryLabel } from "@/lib/services";
+import { SERVICE_CATEGORIES, STANDALONE_SERVICES, getServiceCategory, getServiceCategoryLabel, matchesServiceCategory } from "@/lib/services";
 
 type Sort = "nearest" | "popular" | "price-asc" | "price-desc" | "newest";
 
@@ -29,6 +29,7 @@ const Category = () => {
   const [hideOutOfStock, setHideOutOfStock] = useState(false);
   const [dense, setDense] = useState(false);
   const [serviceFilter, setServiceFilter] = useState(() => new URLSearchParams(window.location.search).get("service") || "all");
+  const isServices = def?.slug === "service";
 
   const { position, loading: geoLoading, requestLocation } = useGeolocation(true);
   const { data: listings = [], isLoading, error } = useListings();
@@ -42,7 +43,9 @@ const Category = () => {
   const items = useMemo(() => {
     if (!def) return [];
     let list = listings.filter(def.match);
-    if (serviceFilter !== "all") list = list.filter((i) => i.service_subcategory === serviceFilter);
+    if (isServices && serviceFilter !== "all") {
+      list = list.filter((i) => matchesServiceCategory(i, serviceFilter) || i.service_subcategory === serviceFilter || (serviceFilter === "standalone" && STANDALONE_SERVICES.some((service) => service.slug === i.service_subcategory)));
+    }
     if (search) list = list.filter((i) => `${i.title} ${i.description || ""}`.toLowerCase().includes(search.toLowerCase()));
     if (location) list = list.filter((i) => i.location?.toLowerCase().includes(location.toLowerCase()));
     if (shopSearch) {
@@ -79,8 +82,8 @@ const Category = () => {
   if (!def) return <Navigate to="/" replace />;
 
   const Icon = def.icon;
-  const isServices = def.slug === "service";
   const selectedService = getServiceCategory(serviceFilter);
+  const selectedStandalone = STANDALONE_SERVICES.find((service) => service.slug === serviceFilter);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -106,7 +109,7 @@ const Category = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">{def.label}</h1>
-              <p className="text-sm text-muted-foreground">{selectedService?.label ?? def.tagline}</p>
+              <p className="text-sm text-muted-foreground">{selectedService?.label ?? selectedStandalone?.label ?? def.tagline}</p>
             </div>
           </div>
 
@@ -125,16 +128,37 @@ const Category = () => {
           </div>
 
           {isServices && (
-            <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <Button size="sm" variant={serviceFilter === "all" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("all")}>All services</Button>
-              {SERVICE_CATEGORIES.map((service) => {
-                const ServiceIcon = service.icon;
-                return (
-                  <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 gap-1.5 text-xs" onClick={() => setServiceFilter(service.slug)}>
-                    <ServiceIcon className="h-3.5 w-3.5" /> {service.shortLabel}
-                  </Button>
-                );
-              })}
+            <div className="space-y-2">
+              <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <Button size="sm" variant={serviceFilter === "all" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("all")}>All services</Button>
+                {SERVICE_CATEGORIES.map((service) => {
+                  const ServiceIcon = service.icon;
+                  return (
+                    <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 gap-1.5 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                      <ServiceIcon className="h-3.5 w-3.5" /> {service.shortLabel}
+                    </Button>
+                  );
+                })}
+                <Button size="sm" variant={serviceFilter === "standalone" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("standalone")}>More help</Button>
+              </div>
+              {selectedService && (
+                <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {selectedService.services.map((service) => (
+                    <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                      {service.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              {serviceFilter === "standalone" && (
+                <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {STANDALONE_SERVICES.map((service) => (
+                    <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                      {service.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -208,7 +232,7 @@ const Category = () => {
               {isServices && <Sparkles className="h-4 w-4 text-primary" />}
               <p className="text-sm text-muted-foreground">{items.length} items found</p>
               <Badge variant="secondary" className="text-xs">{def.label}</Badge>
-              {selectedService && <Badge variant="outline" className="text-xs">{getServiceCategoryLabel(serviceFilter)}</Badge>}
+              {(selectedService || selectedStandalone) && <Badge variant="outline" className="text-xs">{selectedStandalone?.label ?? getServiceCategoryLabel(serviceFilter)}</Badge>}
             </div>
             <div className={cn("grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3", dense ? "xl:grid-cols-5" : "xl:grid-cols-4")}>
               {items.map((item, i) => (

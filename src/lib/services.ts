@@ -173,7 +173,8 @@ export const ALL_SERVICE_OPTIONS = [
 ];
 
 export const getServiceCategory = (slug?: string | null) =>
-  SERVICE_CATEGORIES.find((category) => category.slug === slug);
+  SERVICE_CATEGORIES.find((category) => category.slug === slug) ??
+  SERVICE_CATEGORIES.find((category) => category.slug === SERVICE_CATEGORY_ALIASES[slug ?? ""]);
 
 export const getServiceOption = (slug?: string | null) => {
   if (!slug) return undefined;
@@ -183,6 +184,8 @@ export const getServiceOption = (slug?: string | null) => {
 
 export const getServiceParent = (slug?: string | null) => {
   if (!slug) return undefined;
+  const category = getServiceCategory(slug);
+  if (category) return category;
   const normalized = SERVICE_CATEGORY_ALIASES[slug] ?? slug;
   return SERVICE_CATEGORIES.find((category) => category.services.some((service) => service.slug === normalized));
 };
@@ -193,6 +196,13 @@ export const getServiceCategoryLabel = (slug?: string | null) =>
 export const getServiceSlugsForCategory = (slug?: string | null) => {
   const category = getServiceCategory(slug);
   return category?.services.map((service) => service.slug) ?? [];
+};
+
+export const matchesServiceCategory = (item: { listing_type?: string | null; service_category?: string | null; service_subcategory?: string | null }, slug: string) => {
+  if (item.listing_type !== "service") return false;
+  const category = getServiceCategory(slug);
+  if (!category) return item.service_category === slug || item.service_subcategory === slug;
+  return item.service_category === category.slug || item.service_subcategory === category.slug || category.services.some((service) => service.slug === item.service_subcategory);
 };
 
 export const getServiceIcon = (slug: string): LucideIcon => {

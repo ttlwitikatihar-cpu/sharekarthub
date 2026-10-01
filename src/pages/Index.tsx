@@ -14,7 +14,7 @@ import ProductRail from "@/components/storefront/ProductRail";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 import { useListings, useSellerMap } from "@/hooks/use-listings";
 import { CATEGORY_DEFS } from "@/lib/categories";
-import { SERVICE_CATEGORIES } from "@/lib/services";
+import { SERVICE_CATEGORIES, STANDALONE_SERVICES, matchesServiceCategory } from "@/lib/services";
 
 const TRUST_POINTS = [
   { icon: ShieldCheck, label: "KYC-verified sellers" },
@@ -63,8 +63,12 @@ const Index = () => {
   const serviceCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     SERVICE_CATEGORIES.forEach((service) => {
-      counts[service.slug] = listings.filter((item) => item.listing_type === "service" && item.service_subcategory === service.slug).length;
+      counts[service.slug] = listings.filter((item) => matchesServiceCategory(item, service.slug)).length;
+      service.services.forEach((child) => {
+        counts[child.slug] = listings.filter((item) => item.listing_type === "service" && item.service_subcategory === child.slug).length;
+      });
     });
+    counts.standalone = listings.filter((item) => item.listing_type === "service" && STANDALONE_SERVICES.some((service) => service.slug === item.service_subcategory)).length;
     return counts;
   }, [listings]);
 
