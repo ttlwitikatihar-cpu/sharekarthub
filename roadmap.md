@@ -1,4 +1,4 @@
-- [ ] Expand ShareKart services catalog into parent categories and detailed service options
-- [ ] Add home-page category cards and service drill-down browsing
-- [ ] Add parent/subcategory selection when creating or editing service listings
-- [ ] Validate catalog flow and typecheck
+- [x] Expand ShareKart services catalog into parent categories and detailed service options
+- [x] Add home-page category cards and service drill-down browsing
+- [x] Add parent/subcategory selection when creating or editing service listings
+- [x] Validate catalog flow and typecheck
