@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
-import { SERVICE_CATEGORIES } from "@/lib/services";
+import { SERVICE_CATEGORIES, STANDALONE_SERVICES, getServiceParent } from "@/lib/services";
 
 const EditListing = () => {
   const { id } = useParams();
@@ -24,6 +24,7 @@ const EditListing = () => {
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState("");
   const [listingType, setListingType] = useState("product");
+  const [serviceCategory, setServiceCategory] = useState("");
   const [serviceSubcategory, setServiceSubcategory] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -53,7 +54,9 @@ const EditListing = () => {
       setDescription(listing.description || "");
       setCategory(listing.category);
       setListingType((listing as any).listing_type || "product");
-       setServiceSubcategory((listing as any).service_subcategory || "");
+       const savedSubcategory = (listing as any).service_subcategory || "";
+       setServiceSubcategory(savedSubcategory);
+       setServiceCategory((listing as any).service_category || getServiceParent(savedSubcategory)?.slug || (savedSubcategory.startsWith("standalone-") ? "standalone" : ""));
       setPrice(String(listing.price ?? ""));
       setDeposit(String(listing.security_deposit ?? ""));
       setLocation(listing.location || "");
@@ -145,6 +148,7 @@ const EditListing = () => {
         description,
         category,
         listing_type: listingType,
+        service_category: listingType === "service" ? serviceCategory || null : null,
         service_subcategory: listingType === "service" ? serviceSubcategory || null : null,
         price: category === "donate" ? 0 : Number(price),
         security_deposit: category === "rent" ? Number(deposit) : 0,
@@ -211,14 +215,26 @@ const EditListing = () => {
             </div>
 
             {listingType === "service" && (
-              <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <Label>Service category</Label>
-                <Select value={serviceSubcategory} onValueChange={setServiceSubcategory} required>
-                  <SelectTrigger><SelectValue placeholder="Choose the kind of service" /></SelectTrigger>
-                  <SelectContent>
-                    {SERVICE_CATEGORIES.map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <div className="space-y-2">
+                  <Label>Service category</Label>
+                  <Select value={serviceCategory} onValueChange={(value) => { setServiceCategory(value); setServiceSubcategory(""); }} required>
+                    <SelectTrigger><SelectValue placeholder="Choose a service category" /></SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_CATEGORIES.map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}
+                      <SelectItem value="standalone">Additional home & repair services</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Service needed</Label>
+                  <Select value={serviceSubcategory} onValueChange={setServiceSubcategory} required disabled={!serviceCategory}>
+                    <SelectTrigger><SelectValue placeholder="Choose the exact service" /></SelectTrigger>
+                    <SelectContent>
+                      {(serviceCategory === "standalone" ? STANDALONE_SERVICES : SERVICE_CATEGORIES.find((service) => service.slug === serviceCategory)?.services ?? []).map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
 
