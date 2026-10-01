@@ -128,17 +128,37 @@ const Category = () => {
           </div>
 
           {isServices && (
-            <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <Button size="sm" variant={serviceFilter === "all" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("all")}>All services</Button>
-              {SERVICE_CATEGORIES.map((service) => {
-                const ServiceIcon = service.icon;
-                return (
-                  <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 gap-1.5 text-xs" onClick={() => setServiceFilter(service.slug)}>
-                    <ServiceIcon className="h-3.5 w-3.5" /> {service.shortLabel}
-                  </Button>
-                );
-              })}
-              <Button size="sm" variant={serviceFilter === "standalone" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("standalone")}>More help</Button>
+            <div className="space-y-2">
+              <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <Button size="sm" variant={serviceFilter === "all" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("all")}>All services</Button>
+                {SERVICE_CATEGORIES.map((service) => {
+                  const ServiceIcon = service.icon;
+                  return (
+                    <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 gap-1.5 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                      <ServiceIcon className="h-3.5 w-3.5" /> {service.shortLabel}
+                    </Button>
+                  );
+                })}
+                <Button size="sm" variant={serviceFilter === "standalone" ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter("standalone")}>More help</Button>
+              </div>
+              {selectedService && (
+                <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {selectedService.services.map((service) => (
+                    <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                      {service.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              {serviceFilter === "standalone" && (
+                <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {STANDALONE_SERVICES.map((service) => (
+                    <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter(service.slug)}>
+                      {service.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
