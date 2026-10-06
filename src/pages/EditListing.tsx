@@ -26,6 +26,8 @@ const EditListing = () => {
   const [listingType, setListingType] = useState("product");
   const [serviceCategory, setServiceCategory] = useState("");
   const [serviceSubcategory, setServiceSubcategory] = useState("");
+  const [customServiceCategory, setCustomServiceCategory] = useState("");
+  const [customServiceName, setCustomServiceName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -37,6 +39,10 @@ const EditListing = () => {
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedServiceCategory = SERVICE_CATEGORIES.find((service) => service.slug === serviceCategory);
+  const serviceOptions = selectedServiceCategory?.services ?? [];
+  const otherServiceOption = serviceOptions.find((service) => service.label === "Other");
+  const showCustomServiceName = serviceCategory === "custom-category" || serviceSubcategory === otherServiceOption?.slug;
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ["edit-listing", id],
@@ -54,9 +60,26 @@ const EditListing = () => {
       setDescription(listing.description || "");
       setCategory(listing.category);
       setListingType((listing as any).listing_type || "product");
-       const savedSubcategory = (listing as any).service_subcategory || "";
-       setServiceSubcategory(savedSubcategory);
-       setServiceCategory((listing as any).service_category || getServiceParent(savedSubcategory)?.slug || (savedSubcategory.startsWith("standalone-") ? "standalone" : ""));
+      const savedSubcategory = (listing as any).service_subcategory || "";
+      const savedServiceCategory = (listing as any).service_category || getServiceParent(savedSubcategory)?.slug || "";
+      if (savedSubcategory.startsWith("custom:")) {
+        const customLabel = savedSubcategory.slice("custom:".length);
+        if (savedServiceCategory === "other-services" && customLabel.includes(" — ")) {
+          const [customCategory, ...serviceParts] = customLabel.split(" — ");
+          setServiceCategory("custom-category");
+          setCustomServiceCategory(customCategory);
+          setCustomServiceName(serviceParts.join(" — "));
+          setServiceSubcategory("");
+        } else {
+          setServiceCategory(savedServiceCategory || "other-services");
+          const otherOption = SERVICE_CATEGORIES.find((service) => service.slug === (savedServiceCategory || "other-services"))?.services.find((service) => service.label === "Other");
+          setServiceSubcategory(otherOption?.slug || "");
+          setCustomServiceName(customLabel);
+        }
+      } else {
+        setServiceSubcategory(savedSubcategory);
+        setServiceCategory(savedServiceCategory);
+      }
       setPrice(String(listing.price ?? ""));
       setDeposit(String(listing.security_deposit ?? ""));
       setLocation(listing.location || "");
@@ -148,13 +171,19 @@ const EditListing = () => {
         description,
         category,
         listing_type: listingType,
-        service_category: listingType === "service" ? serviceCategory || null : null,
-        service_subcategory: listingType === "service" ? serviceSubcategory || null : null,
+        service_category: listingType === "service" ? (serviceCategory === "custom-category" ? "other-services" : serviceCategory || null) : null,
+        service_subcategory: listingType === "service"
+          ? serviceCategory === "custom-category"
+            ? `custom:${customServiceCategory.trim()} — ${customServiceName.trim()}`
+            : showCustomServiceName
+              ? `custom:${customServiceName.trim()}`
+              : serviceSubcategory || null
+          : null,
         price: category === "donate" ? 0 : Number(price),
         security_deposit: category === "rent" ? Number(deposit) : 0,
         location,
-        condition: condition || "good",
-        quantity: Number(quantity) || 1,
+        condition: listingType === "product" ? condition || "good" : null,
+        quantity: listingType === "product" ? Number(quantity) || 1 : 1,
         images: allImages,
         status: Number(quantity) > 0 ? "active" : "out_of_stock",
       } as any).eq("id", id!);

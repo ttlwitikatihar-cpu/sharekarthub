@@ -190,7 +190,7 @@ const ItemDetail = () => {
 
             <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               {item.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{item.location}</span>}
-              <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{item.condition}</span>
+              {!isService && item.condition && <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{item.condition}</span>}
             </div>
 
             <div className="text-3xl font-black">
@@ -297,7 +297,7 @@ const ItemDetail = () => {
             )}
 
             {/* Quantity Selector */}
-            {!isOwner && !outOfStock && availableQty > 1 && item.category !== "service" && (
+            {!isOwner && !outOfStock && availableQty > 1 && !isService && (
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">Quantity:</span>
                 <div className="flex items-center gap-1 border border-border rounded-lg">

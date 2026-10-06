@@ -65,7 +65,7 @@ const Index = () => {
     SERVICE_CATEGORIES.forEach((service) => {
       counts[service.slug] = listings.filter((item) => matchesServiceCategory(item, service.slug)).length;
       service.services.forEach((child) => {
-        counts[child.slug] = listings.filter((item) => item.listing_type === "service" && item.service_subcategory === child.slug).length;
+        counts[child.slug] = listings.filter((item) => matchesServiceCategory(item, child.slug)).length;
       });
     });
     counts.standalone = listings.filter((item) => item.listing_type === "service" && STANDALONE_SERVICES.some((service) => service.slug === item.service_subcategory)).length;
