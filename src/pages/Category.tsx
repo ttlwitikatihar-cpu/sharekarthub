@@ -44,7 +44,7 @@ const Category = () => {
     if (!def) return [];
     let list = listings.filter(def.match);
     if (isServices && serviceFilter !== "all") {
-      list = list.filter((i) => matchesServiceCategory(i, serviceFilter) || i.service_subcategory === serviceFilter || (serviceFilter === "standalone" && STANDALONE_SERVICES.some((service) => service.slug === i.service_subcategory)));
+      list = list.filter((i) => matchesServiceCategory(i, serviceFilter) || (serviceFilter === "standalone" && STANDALONE_SERVICES.some((service) => service.slug === i.service_subcategory)));
     }
     if (search) list = list.filter((i) => `${i.title} ${i.description || ""}`.toLowerCase().includes(search.toLowerCase()));
     if (location) list = list.filter((i) => i.location?.toLowerCase().includes(location.toLowerCase()));
@@ -143,7 +143,7 @@ const Category = () => {
               </div>
               {selectedService && (
                 <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {selectedService.services.map((service) => (
+                  {(selectedService.slug === "other-services" ? STANDALONE_SERVICES : selectedService.services).map((service) => (
                     <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter(service.slug)}>
                       {service.label}
                     </Button>

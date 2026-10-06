@@ -42,6 +42,10 @@ const option = (label: string, slug = label) => ({
   label,
 });
 
+export const STANDALONE_SERVICES: ServiceOption[] = [
+  "TV Repair", "Plumber", "Carpenter", "Electrician", "Home Painter", "Civil contractor", "POP False ceiling", "Interior Designer", "Makeup Artist", "Mehndi Artist", "Computer Repair", "CCTV Camera", "Room Cooler", "Water Dispenser", "Air Cooler", "Water Cooler", "Deep Freezer", "Inverter", "Pest control", "Car Detailing", "Gardening", "Sanitization", "Fabrication", "Physiotherapy", "Vastu Shastra and Numerologist Consultant", "T-Shirt Printing", "Security Guard", "Movers and Packers", "Other",
+].map((label) => option(label, `standalone-${label}`));
+
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
   {
     slug: "air-conditioner",
@@ -55,7 +59,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
       option("Annual maintenance contract", "ac-amc"), option("Repair", "ac-repair"), option("Service", "ac-service"),
       option("Cooling problem", "ac-cooling-problem"), option("Gas leakage problem", "ac-gas-leakage"), option("Water leakage", "ac-water-leakage"),
       option("Installation", "ac-installation"), option("Un-Installation", "ac-uninstallation"), option("Relocation", "ac-relocation"),
-      option("Gas charging (Top Up)", "ac-gas-charging"), option("Remote problem", "ac-remote-problem"), option("Air Conditioner Purchase", "ac-purchase"),
+      option("Gas charging (Top Up)", "ac-gas-charging"), option("Remote problem", "ac-remote-problem"), option("Air Conditioner Purchase", "ac-purchase"), option("Other", "ac-other"),
     ],
   },
   {
@@ -76,7 +80,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: Refrigerator,
     tint: "bg-primary/10",
     iconTone: "text-primary",
-    services: ["Repair", "No Power", "Light Issue", "Door Issue", "Cooling Issue", "Servicing cleaning (one Time)", "Freezer Cooling Issue", "Installation", "Servicing cleaning (AMC)"].map((label) => option(label, `refrigerator-${label}`)),
+    services: ["Repair", "No Power", "Light Issue", "Door Issue", "Cooling Issue", "Servicing cleaning (one Time)", "Freezer Cooling Issue", "Installation", "Servicing cleaning (AMC)", "Other"].map((label) => option(label, `refrigerator-${label}`)),
   },
   {
     slug: "geyser",
@@ -86,7 +90,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: Flame,
     tint: "bg-accent/15",
     iconTone: "text-accent",
-    services: ["Electric Geyser Repair", "Electric Geyser heating issue", "Electric Geyser power issue", "Electric Geyser Installation", "Electric Geyser Un-Installation", "Electric Geyser Shifting", "Gas geyser Repair", "Gas geyser heating issue", "Gas geyser sparking issue", "Gas geyser Shifting", "Gas geyser Un-Installation", "Gas geyser Installation"].map((label) => option(label, `geyser-${label}`)),
+    services: ["Electric Geyser Repair", "Electric Geyser heating issue", "Electric Geyser power issue", "Electric Geyser Installation", "Electric Geyser Un-Installation", "Electric Geyser Shifting", "Gas geyser Repair", "Gas geyser heating issue", "Gas geyser sparking issue", "Gas geyser Shifting", "Gas geyser Un-Installation", "Gas geyser Installation", "Other"].map((label) => option(label, `geyser-${label}`)),
   },
   {
     slug: "cleaning",
@@ -106,7 +110,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: WashingMachine,
     tint: "bg-accent/15",
     iconTone: "text-accent",
-    services: ["Repair", "Servicing cleaning (one Time)", "Display issue", "Water drain issue", "Tub rotation issue", "No Power issue", "Installation", "Button replace", "Servicing cleaning (AMC)"].map((label) => option(label, `washing-machine-${label}`)),
+    services: ["Repair", "Servicing cleaning (one Time)", "Display issue", "Water drain issue", "Tub rotation issue", "No Power issue", "Installation", "Button replace", "Servicing cleaning (AMC)", "Other"].map((label) => option(label, `washing-machine-${label}`)),
   },
   {
     slug: "microwave-oven",
@@ -116,7 +120,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: Microwave,
     tint: "bg-primary/10",
     iconTone: "text-primary",
-    services: ["Repair", "Glass plate issue", "Plate rotation issue", "Touch panel issue", "Spark issue", "Heating issue", "Installation", "Microwave cleaning"].map((label) => option(label, `microwave-${label}`)),
+    services: ["Repair", "Glass plate issue", "Plate rotation issue", "Touch panel issue", "Spark issue", "Heating issue", "Installation", "Microwave cleaning", "Other"].map((label) => option(label, `microwave-${label}`)),
   },
   {
     slug: "water-purifier",
@@ -126,7 +130,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: Droplets,
     tint: "bg-accent/15",
     iconTone: "text-accent",
-    services: ["Servicing", "Repair", "No Power", "Filter change", "Water leakage", "Installation", "Shifting", "Un-Installation", "Tap change"].map((label) => option(label, `water-purifier-${label}`)),
+    services: ["Servicing", "Repair", "No Power", "Filter change", "Water leakage", "Installation", "Shifting", "Un-Installation", "Tap change", "Other"].map((label) => option(label, `water-purifier-${label}`)),
   },
   {
     slug: "kitchen-chimney-appliances",
@@ -136,13 +140,19 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
     icon: ChefHat,
     tint: "bg-primary/10",
     iconTone: "text-primary",
-    services: ["Basic wall mounted chimney", "Island Kitchen Chimney", "Chimney AMC", "Gas Burner", "Dish Washer Service"].map((label) => option(label, `kitchen-${label}`)),
+    services: ["Basic wall mounted chimney", "Island Kitchen Chimney", "Chimney AMC", "Gas Burner", "Dish Washer Service", "Other"].map((label) => option(label, `kitchen-${label}`)),
+  },
+  {
+    slug: "other-services",
+    label: "Additional Home & Repair Services",
+    shortLabel: "More help",
+    description: "Local specialists for other home, repair and personal needs",
+    icon: BriefcaseBusiness,
+    tint: "bg-accent/15",
+    iconTone: "text-accent",
+    services: STANDALONE_SERVICES,
   },
 ];
-
-export const STANDALONE_SERVICES: ServiceOption[] = [
-  "TV Repair", "Plumber", "Carpenter", "Electrician", "Home Painter", "Civil contractor", "POP False ceiling", "Interior Designer", "Makeup Artist", "Mehndi Artist", "Computer Repair", "CCTV Camera", "Room Cooler", "Water Dispenser", "Air Cooler", "Water Cooler", "Deep Freezer", "Inverter", "Pest control", "Car Detailing", "Gardening", "Sanitization", "Fabrication", "Physiotherapy", "Vastu Shastra and Numerologist Consultant", "T-Shirt Printing", "Security Guard", "Movers and Packers", "Other",
-].map((label) => option(label, `standalone-${label}`));
 
 export const SERVICE_CATEGORY_ALIASES: Record<string, string> = {
   home: "cleaning",
@@ -191,7 +201,10 @@ export const getServiceParent = (slug?: string | null) => {
 };
 
 export const getServiceCategoryLabel = (slug?: string | null) =>
-  getServiceOption(slug)?.label ?? getServiceCategory(slug)?.label ?? "Other services";
+  getServiceOption(slug)?.label ?? getCustomServiceLabel(slug) ?? getServiceCategory(slug)?.label ?? "Other services";
+
+export const getCustomServiceLabel = (slug?: string | null) =>
+  slug?.startsWith("custom:") ? slug.slice("custom:".length).trim() : undefined;
 
 export const getServiceSlugsForCategory = (slug?: string | null) => {
   const category = getServiceCategory(slug);
@@ -200,8 +213,11 @@ export const getServiceSlugsForCategory = (slug?: string | null) => {
 
 export const matchesServiceCategory = (item: { listing_type?: string | null; service_category?: string | null; service_subcategory?: string | null }, slug: string) => {
   if (item.listing_type !== "service") return false;
+  if (item.service_subcategory === slug) return true;
+  const parentForOption = SERVICE_CATEGORIES.find((category) => category.services.some((service) => service.slug === slug));
+  if (parentForOption?.services.find((service) => service.slug === slug)?.label === "Other" && item.service_category === parentForOption.slug && item.service_subcategory?.startsWith("custom:")) return true;
   const category = getServiceCategory(slug);
-  if (!category) return item.service_category === slug || item.service_subcategory === slug;
+  if (!category) return item.service_category === slug;
   return item.service_category === category.slug || item.service_subcategory === category.slug || category.services.some((service) => service.slug === item.service_subcategory);
 };
 

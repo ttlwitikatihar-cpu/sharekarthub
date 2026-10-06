@@ -1,0 +1,1 @@
+- Store user-entered service options in the existing `service_subcategory` text field with a `custom:` prefix, and parse that format centrally so unlisted services do not require schema changes.

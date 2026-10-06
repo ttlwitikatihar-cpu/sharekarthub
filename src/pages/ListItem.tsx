@@ -26,6 +26,8 @@ const ListItem = () => {
   const [listingType, setListingType] = useState("product");
   const [serviceCategory, setServiceCategory] = useState("");
   const [serviceSubcategory, setServiceSubcategory] = useState("");
+  const [customServiceCategory, setCustomServiceCategory] = useState("");
+  const [customServiceName, setCustomServiceName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -37,6 +39,10 @@ const ListItem = () => {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { position, loading: geoLoading, requestLocation } = useGeolocation();
+  const selectedServiceCategory = SERVICE_CATEGORIES.find((service) => service.slug === serviceCategory);
+  const serviceOptions = selectedServiceCategory?.services ?? [];
+  const otherServiceOption = serviceOptions.find((service) => service.label === "Other");
+  const showCustomServiceName = serviceCategory === "custom-category" || serviceSubcategory === otherServiceOption?.slug;
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile-listitem", user?.id],
@@ -105,13 +111,19 @@ const ListItem = () => {
         description,
         category,
         listing_type: listingType,
-        service_category: listingType === "service" ? serviceCategory || null : null,
-        service_subcategory: listingType === "service" ? serviceSubcategory || null : null,
+        service_category: listingType === "service" ? (serviceCategory === "custom-category" ? "other-services" : serviceCategory || null) : null,
+        service_subcategory: listingType === "service"
+          ? serviceCategory === "custom-category"
+            ? `custom:${customServiceCategory.trim()} — ${customServiceName.trim()}`
+            : showCustomServiceName
+              ? `custom:${customServiceName.trim()}`
+              : serviceSubcategory || null
+          : null,
         price: category === "donate" ? 0 : Number(price),
         security_deposit: category === "rent" ? Number(deposit) : 0,
         location,
-        condition: condition || "good",
-        quantity: Number(quantity) || 1,
+        condition: listingType === "product" ? condition || "good" : null,
+        quantity: listingType === "product" ? Number(quantity) || 1 : 1,
         images,
         latitude: position?.latitude ?? null,
         longitude: position?.longitude ?? null,
