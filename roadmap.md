@@ -2,3 +2,6 @@
 - [x] Add home-page category cards and service drill-down browsing
 - [x] Add parent/subcategory selection when creating or editing service listings
 - [x] Validate catalog flow and typecheck
+- [ ] Separate product-only and service-only listing fields and preserve compatible order behavior
+- [ ] Add Other service choices with custom entry support across categories and subcategories
+- [ ] Verify create/edit forms, service discovery, item details, and mobile layout
