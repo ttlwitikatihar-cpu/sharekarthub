@@ -139,7 +139,9 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
         )}
         <div className="flex items-center justify-between pt-1">
           <span className="font-bold text-lg text-card-foreground">
-            {item.category === "donate" ? (
+            {listingType === "service" ? (
+              <>₹{(item.price ?? 0).toLocaleString()}<span className="text-xs font-normal text-muted-foreground"> service fee</span></>
+            ) : item.category === "donate" ? (
               <span className="text-primary">Free</span>
             ) : (
               <>₹{(item.price ?? 0).toLocaleString()}{item.category === "rent" && <span className="text-xs font-normal text-muted-foreground">/day</span>}</>

@@ -24,7 +24,7 @@ export const CATEGORY_DEFS: CategoryDef[] = [
     icon: IndianRupee,
     tint: "bg-primary/10 text-primary",
     ring: "hover:ring-primary/40",
-    match: (i) => i.category === "sell",
+    match: (i) => i.category === "sell" && i.listing_type !== "service",
   },
   {
     slug: "rent",
@@ -34,7 +34,7 @@ export const CATEGORY_DEFS: CategoryDef[] = [
     icon: Clock,
     tint: "bg-accent/15 text-accent",
     ring: "hover:ring-accent/40",
-    match: (i) => i.category === "rent",
+    match: (i) => i.category === "rent" && i.listing_type !== "service",
   },
   {
     slug: "donate",
@@ -44,7 +44,7 @@ export const CATEGORY_DEFS: CategoryDef[] = [
     icon: Gift,
     tint: "bg-primary/15 text-primary",
     ring: "hover:ring-primary/40",
-    match: (i) => i.category === "donate",
+    match: (i) => i.category === "donate" && i.listing_type !== "service",
   },
   {
     slug: "service",
