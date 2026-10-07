@@ -114,7 +114,7 @@ const ListItem = () => {
         user_id: user.id,
         title,
         description,
-        category,
+        category: listingType === "service" ? "sell" : category,
         listing_type: listingType,
         service_category: listingType === "service" ? (serviceCategory === "custom-category" ? "other-services" : serviceCategory || null) : null,
         service_subcategory: listingType === "service"
@@ -124,8 +124,8 @@ const ListItem = () => {
               ? `custom:${customServiceName.trim()}`
               : serviceSubcategory || null
           : null,
-        price: category === "donate" ? 0 : Number(price),
-        security_deposit: category === "rent" ? Number(deposit) : 0,
+        price: listingType === "product" && category === "donate" ? 0 : Number(price),
+        security_deposit: listingType === "product" && category === "rent" ? Number(deposit) : 0,
         location,
         condition: listingType === "product" ? condition || "good" : null,
         quantity: listingType === "product" ? Number(quantity) || 1 : 1,
@@ -188,7 +188,7 @@ const ListItem = () => {
               </div>}
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={listingType} onValueChange={(value) => { setListingType(value); if (value === "service") setCategory("sell"); }}>
+                <Select value={listingType} onValueChange={setListingType}>
                   <SelectTrigger><SelectValue placeholder="Product or Service" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="product">Product</SelectItem>
