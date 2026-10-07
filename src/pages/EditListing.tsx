@@ -43,6 +43,11 @@ const EditListing = () => {
   const serviceOptions = selectedServiceCategory?.services ?? [];
   const otherServiceOption = serviceOptions.find((service) => service.label === "Other");
   const showCustomServiceName = serviceCategory === "custom-category" || serviceSubcategory === otherServiceOption?.slug;
+  const canSave = listingType === "product"
+    ? Boolean(category)
+    : Boolean(serviceCategory && (serviceCategory === "custom-category"
+      ? customServiceCategory.trim() && customServiceName.trim()
+      : serviceSubcategory && (!showCustomServiceName || customServiceName.trim())));
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ["edit-listing", id],
@@ -169,7 +174,7 @@ const EditListing = () => {
       const { error } = await supabase.from("listings").update({
         title,
         description,
-        category,
+        category: listingType === "service" ? "sell" : category,
         listing_type: listingType,
         service_category: listingType === "service" ? (serviceCategory === "custom-category" ? "other-services" : serviceCategory || null) : null,
         service_subcategory: listingType === "service"
@@ -220,8 +225,8 @@ const EditListing = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Category</Label>
+              {listingType === "product" && <div className="space-y-2">
+                <Label>Listing category</Label>
                 <Select value={category} onValueChange={setCategory} required>
                   <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
@@ -230,10 +235,10 @@ const EditListing = () => {
                     <SelectItem value="donate">Donate</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div>}
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={listingType} onValueChange={setListingType}>
+                <Select value={listingType} onValueChange={(value) => { setListingType(value); if (value === "service") setCategory("sell"); }}>
                   <SelectTrigger><SelectValue placeholder="Product or Service" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="product">Product</SelectItem>
@@ -247,35 +252,43 @@ const EditListing = () => {
               <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <div className="space-y-2">
                   <Label>Service category</Label>
-                  <Select value={serviceCategory} onValueChange={(value) => { setServiceCategory(value); setServiceSubcategory(""); }} required>
+                  <Select value={serviceCategory} onValueChange={(value) => { setServiceCategory(value); setServiceSubcategory(""); setCustomServiceCategory(""); setCustomServiceName(""); }} required>
                     <SelectTrigger><SelectValue placeholder="Choose a service category" /></SelectTrigger>
                     <SelectContent>
                       {SERVICE_CATEGORIES.map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}
-                      <SelectItem value="standalone">Additional home & repair services</SelectItem>
+                      <SelectItem value="custom-category">Other category</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Service needed</Label>
-                  <Select value={serviceSubcategory} onValueChange={setServiceSubcategory} required disabled={!serviceCategory}>
-                    <SelectTrigger><SelectValue placeholder="Choose the exact service" /></SelectTrigger>
-                    <SelectContent>
-                      {(serviceCategory === "standalone" ? STANDALONE_SERVICES : SERVICE_CATEGORIES.find((service) => service.slug === serviceCategory)?.services ?? []).map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {serviceCategory === "custom-category" ? (
+                  <>
+                    <div className="space-y-2"><Label htmlFor="custom-service-category">Your service category</Label><Input id="custom-service-category" value={customServiceCategory} onChange={(e) => setCustomServiceCategory(e.target.value)} placeholder="e.g. Pet care" required /></div>
+                    <div className="space-y-2"><Label htmlFor="custom-service-name">Service offered</Label><Input id="custom-service-name" value={customServiceName} onChange={(e) => setCustomServiceName(e.target.value)} placeholder="e.g. Dog walking" required /></div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Service needed</Label>
+                      <Select value={serviceSubcategory} onValueChange={(value) => { setServiceSubcategory(value); setCustomServiceName(""); }} required disabled={!serviceCategory}>
+                        <SelectTrigger><SelectValue placeholder="Choose the exact service" /></SelectTrigger>
+                        <SelectContent>{serviceOptions.map((service) => <SelectItem key={service.slug} value={service.slug}>{service.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    {showCustomServiceName && <div className="space-y-2"><Label htmlFor="custom-service-name">Describe the service</Label><Input id="custom-service-name" value={customServiceName} onChange={(e) => setCustomServiceName(e.target.value)} placeholder="Enter the service you offer" required /></div>}
+                  </>
+                )}
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Price {category === "donate" && "(N/A)"}</Label>
-                <Input type="number" placeholder="₹0" disabled={category === "donate"} value={price} onChange={(e) => setPrice(e.target.value)} />
+                <Label>{listingType === "service" ? "Service fee" : "Price"} {listingType === "product" && category === "donate" && "(N/A)"}</Label>
+                <Input type="number" placeholder="₹0" disabled={listingType === "product" && category === "donate"} value={price} onChange={(e) => setPrice(e.target.value)} />
               </div>
-              <div className="space-y-2">
+              {listingType === "product" && category === "rent" && <div className="space-y-2">
                 <Label>Security Deposit</Label>
-                <Input type="number" placeholder="₹0" disabled={category !== "rent"} value={deposit} onChange={(e) => setDeposit(e.target.value)} />
-              </div>
+                <Input type="number" placeholder="₹0" value={deposit} onChange={(e) => setDeposit(e.target.value)} />
+              </div>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -283,13 +296,13 @@ const EditListing = () => {
                 <Label>Location</Label>
                 <Input placeholder="e.g. Mumbai, MH" value={location} onChange={(e) => setLocation(e.target.value)} required />
               </div>
-              <div className="space-y-2">
+              {listingType === "product" && <div className="space-y-2">
                 <Label>Quantity</Label>
                 <Input type="number" min="0" placeholder="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
-              </div>
+              </div>}
             </div>
 
-            <div className="space-y-2">
+            {listingType === "product" && <div className="space-y-2">
               <Label>Condition</Label>
               <Select value={condition} onValueChange={setCondition}>
                 <SelectTrigger><SelectValue placeholder="Select condition" /></SelectTrigger>
@@ -301,7 +314,7 @@ const EditListing = () => {
                   <SelectItem value="fair">Fair</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div>}
 
             <div className="space-y-2">
               <Label>Description</Label>
@@ -339,7 +352,7 @@ const EditListing = () => {
               )}
             </div>
 
-            <Button type="submit" size="lg" className="w-full" disabled={loading || !category}>
+            <Button type="submit" size="lg" className="w-full" disabled={loading || !canSave}>
               {loading ? "Saving..." : "Save Changes"}
             </Button>
           </form>

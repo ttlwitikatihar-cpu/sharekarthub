@@ -201,7 +201,7 @@ const ItemDetail = () => {
               )}
             </div>
 
-            {item.security_deposit && item.security_deposit > 0 && (
+            {!isService && item.security_deposit && item.security_deposit > 0 && (
               <p className="text-sm text-muted-foreground">
                 Security deposit: <span className="font-semibold text-foreground">₹{item.security_deposit.toLocaleString()}</span>{" "}
                 <span className="text-amber-600">(refundable · escrow coming soon)</span>
@@ -378,7 +378,7 @@ const ItemDetail = () => {
                     }
                     setShowTerms(true);
                   }}>
-                    {outOfStock ? "Out of Stock" : isDonation ? "Request Item" : item.category === "rent" ? "Request to Rent" : "Buy Now"}
+                    {outOfStock ? "Out of Stock" : isService ? "Request Service" : isDonation ? "Request Item" : item.category === "rent" ? "Request to Rent" : "Buy Now"}
                   </Button>
                   <Button variant="outline" size="lg" className="gap-2" onClick={async () => {
                     if (!user) { navigate("/auth"); return; }
