@@ -184,8 +184,8 @@ const EditListing = () => {
               ? `custom:${customServiceName.trim()}`
               : serviceSubcategory || null
           : null,
-        price: category === "donate" ? 0 : Number(price),
-        security_deposit: category === "rent" ? Number(deposit) : 0,
+        price: listingType === "product" && category === "donate" ? 0 : Number(price),
+        security_deposit: listingType === "product" && category === "rent" ? Number(deposit) : 0,
         location,
         condition: listingType === "product" ? condition || "good" : null,
         quantity: listingType === "product" ? Number(quantity) || 1 : 1,

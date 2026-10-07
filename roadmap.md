@@ -4,4 +4,4 @@
 - [x] Validate catalog flow and typecheck
 - [x] Separate product-only and service-only listing fields and preserve compatible order behavior
 - [x] Add Other service choices with custom entry support across categories and subcategories
-- [ ] Verify create/edit forms, service discovery, item details, and mobile layout
+- [x] Verify create/edit forms, service discovery, item details, and mobile layout

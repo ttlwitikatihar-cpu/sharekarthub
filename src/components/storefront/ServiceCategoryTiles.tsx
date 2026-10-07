@@ -27,7 +27,7 @@ const ServiceCategoryTiles = ({ counts }: ServiceCategoryTilesProps) => (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {SERVICE_CATEGORIES.map((service, index) => {
         const Icon = service.icon;
-        const count = service.services.reduce((total, child) => total + (counts[child.slug] ?? 0), counts[service.slug] ?? 0);
+        const count = counts[service.slug] ?? 0;
         return (
           <motion.div key={service.slug} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.035 }}>
             <Link to={`/c/service?service=${service.slug}`} className="group flex h-full min-h-[142px] flex-col justify-between rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
