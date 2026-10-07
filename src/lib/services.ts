@@ -155,6 +155,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
 ];
 
 export const SERVICE_CATEGORY_ALIASES: Record<string, string> = {
+  standalone: "other-services",
   home: "cleaning",
   "home-services": "cleaning",
   "repairs-maintenance": "other",

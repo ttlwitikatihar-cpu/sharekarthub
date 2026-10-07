@@ -85,8 +85,8 @@ const Index = () => {
       .slice(0, 12);
   }, [inStock, position]);
 
-  const freeItems = useMemo(() => inStock.filter((i) => i.category === "donate").slice(0, 12), [inStock]);
-  const rentItems = useMemo(() => inStock.filter((i) => i.category === "rent").slice(0, 12), [inStock]);
+  const freeItems = useMemo(() => inStock.filter((i) => i.category === "donate" && i.listing_type !== "service").slice(0, 12), [inStock]);
+  const rentItems = useMemo(() => inStock.filter((i) => i.category === "rent" && i.listing_type !== "service").slice(0, 12), [inStock]);
   const serviceItems = useMemo(() => inStock.filter((i) => i.listing_type === "service").slice(0, 12), [inStock]);
   const trending = useMemo(
     () => [...inStock].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0)).slice(0, 12),

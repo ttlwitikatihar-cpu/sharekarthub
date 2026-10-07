@@ -194,7 +194,9 @@ const ItemDetail = () => {
             </div>
 
             <div className="text-3xl font-black">
-              {isDonation ? (
+              {isService ? (
+                <><span className="text-base font-medium text-muted-foreground">Service fee </span>₹{(item.price ?? 0).toLocaleString()}</>
+              ) : isDonation ? (
                 <span className="text-primary">Free</span>
               ) : (
                 <>₹{(item.price ?? 0).toLocaleString()}{item.category === "rent" && <span className="text-base font-normal text-muted-foreground">/day</span>}</>
