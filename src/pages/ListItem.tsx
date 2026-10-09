@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
-import { SERVICE_CATEGORIES } from "@/lib/services";
+import { useServiceCatalog } from "@/hooks/use-service-catalog";
 
 const ListItem = () => {
   const navigate = useNavigate();
@@ -39,6 +39,7 @@ const ListItem = () => {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { position, loading: geoLoading, requestLocation } = useGeolocation();
+  const { categories: SERVICE_CATEGORIES, getParent: getServiceParent } = useServiceCatalog();
   const selectedServiceCategory = SERVICE_CATEGORIES.find((service) => service.slug === serviceCategory);
   const serviceOptions = selectedServiceCategory?.services ?? [];
   const otherServiceOption = serviceOptions.find((service) => service.label === "Other");

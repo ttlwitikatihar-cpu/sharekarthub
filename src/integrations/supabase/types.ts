@@ -484,6 +484,86 @@ export type Database = {
           },
         ]
       }
+      service_catalog: {
+        Row: {
+          created_at: string
+          label: string
+          parent_slug: string | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          label: string
+          parent_slug?: string | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          label?: string
+          parent_slug?: string | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_catalog_parent_slug_fkey"
+            columns: ["parent_slug"]
+            isOneToOne: false
+            referencedRelation: "service_catalog"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      service_name_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_category: string
+          source_value: string
+          status: string
+          target_category: string | null
+          target_service: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_category: string
+          source_value: string
+          status?: string
+          target_category?: string | null
+          target_service?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_category?: string
+          source_value?: string
+          status?: string
+          target_category?: string | null
+          target_service?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_name_reviews_target_category_fkey"
+            columns: ["target_category"]
+            isOneToOne: false
+            referencedRelation: "service_catalog"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "service_name_reviews_target_service_fkey"
+            columns: ["target_service"]
+            isOneToOne: false
+            referencedRelation: "service_catalog"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           against_user_id: string
@@ -766,6 +846,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      review_other_service_name: {
+        Args: {
+          _action: string
+          _category?: string
+          _id: string
+          _new_category?: string
+          _new_service?: string
+          _service?: string
+        }
+        Returns: undefined
       }
       verify_handover_otp: {
         Args: { _order_id: string; _otp: string }

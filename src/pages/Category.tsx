@@ -14,7 +14,9 @@ import { CATEGORY_DEFS, getCategory } from "@/lib/categories";
 import { useListings, useSellerMap } from "@/hooks/use-listings";
 import { useGeolocation, getDistance } from "@/hooks/use-geolocation";
 import { cn } from "@/lib/utils";
-import { SERVICE_CATEGORIES, STANDALONE_SERVICES, getServiceCategory, getServiceCategoryLabel, matchesServiceCategory } from "@/lib/services";
+import { STANDALONE_SERVICES } from "@/lib/services";
+import { useServiceCatalog } from "@/hooks/use-service-catalog";
+import { useSearchInterests } from "@/hooks/use-search-interests";
 
 type Sort = "nearest" | "popular" | "price-asc" | "price-desc" | "newest";
 
@@ -23,6 +25,8 @@ const Category = () => {
   const def = getCategory(slug);
 
   const [search, setSearch] = useState("");
+  useSearchInterests(search);
+  const { categories: SERVICE_CATEGORIES, getCategory: getServiceCategory, getLabel: getServiceCategoryLabel, getParent, matches: matchesServiceCategory } = useServiceCatalog();
   const [location, setLocation] = useState("");
   const [shopSearch, setShopSearch] = useState("");
   const [sortBy, setSortBy] = useState<Sort>("nearest");
@@ -77,12 +81,12 @@ const Category = () => {
     }
     // keep out-of-stock visible but pushed to the end
     return sorted.sort((a, b) => Number(a.status === "out_of_stock") - Number(b.status === "out_of_stock"));
-  }, [listings, def, search, location, shopSearch, hideOutOfStock, sortBy, position, shopMap, serviceFilter]);
+  }, [listings, def, search, location, shopSearch, hideOutOfStock, sortBy, position, shopMap, serviceFilter, matchesServiceCategory]);
 
   if (!def) return <Navigate to="/" replace />;
 
   const Icon = def.icon;
-  const selectedService = getServiceCategory(serviceFilter);
+  const selectedService = getServiceCategory(serviceFilter) ?? getParent(serviceFilter);
   const selectedStandalone = STANDALONE_SERVICES.find((service) => service.slug === serviceFilter);
 
   return (
@@ -143,7 +147,7 @@ const Category = () => {
               </div>
               {selectedService && (
                 <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {(selectedService.slug === "other-services" ? STANDALONE_SERVICES : selectedService.services).map((service) => (
+                  {selectedService.services.map((service) => (
                     <Button key={service.slug} size="sm" variant={serviceFilter === service.slug ? "default" : "outline"} className="shrink-0 text-xs" onClick={() => setServiceFilter(service.slug)}>
                       {service.label}
                     </Button>
