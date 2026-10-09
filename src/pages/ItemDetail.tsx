@@ -19,7 +19,7 @@ import SEO from "@/components/SEO";
 import { useWishlist, shareItem } from "@/lib/wishlist";
 import { calculatePricing, formatINR } from "@/lib/pricing";
 import { usePlatformSettings } from "@/hooks/use-platform-settings";
-import { getServiceCategoryLabel } from "@/lib/services";
+import { useServiceCatalog } from "@/hooks/use-service-catalog";
 
 const ItemDetail = () => {
   const { id } = useParams();
@@ -31,6 +31,7 @@ const ItemDetail = () => {
   const [placing, setPlacing] = useState(false);
   const { has: isWishlisted, toggle: toggleWishlist } = useWishlist();
   const settings = usePlatformSettings();
+  const { getLabel: getServiceCategoryLabel } = useServiceCatalog();
 
 
   const { data: item, isLoading } = useQuery({

@@ -13,14 +13,14 @@ const CategoryTiles = ({ counts }: CategoryTilesProps) => (
     <div className="flex items-end justify-between mb-4">
       <div>
         <h2 id="shop-by-category" className="text-xl font-bold tracking-tight">
-          Shop by category
+          Browse products
         </h2>
         <p className="text-sm text-muted-foreground">Rent it, buy it, or get it free — from people near you</p>
       </div>
     </div>
 
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
-      {CATEGORY_DEFS.map((cat, i) => (
+    <div className="grid grid-cols-3 gap-3 md:gap-4">
+      {CATEGORY_DEFS.filter(cat => cat.slug !== "service").map((cat, i) => (
         <motion.div
           key={cat.slug}
           initial={{ opacity: 0, y: 12 }}
@@ -30,15 +30,15 @@ const CategoryTiles = ({ counts }: CategoryTilesProps) => (
           <Link
             to={`/c/${cat.slug}`}
             className={cn(
-              "group relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 ring-2 ring-transparent transition-all hover:-translate-y-1 hover:shadow-lg",
+              "group relative flex h-full flex-col gap-2 rounded-lg border border-border bg-card p-3 md:p-4 ring-2 ring-transparent transition-all hover:-translate-y-1 hover:shadow-lg",
               cat.ring,
             )}
           >
-            <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", cat.tint)}>
+            <div className={cn("flex h-11 w-11 items-center justify-center rounded-lg", cat.tint)}>
               <cat.icon className="h-5 w-5" />
             </div>
             <div className="space-y-1">
-              <p className="font-semibold leading-tight group-hover:text-primary transition-colors">{cat.label}</p>
+              <p className="text-sm md:text-base font-semibold leading-tight group-hover:text-primary transition-colors">{cat.label}</p>
               <p className="text-xs text-muted-foreground line-clamp-2">{cat.tagline}</p>
             </div>
             <span className="mt-auto text-xs font-medium text-muted-foreground">

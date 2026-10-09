@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Shield, AlertTriangle } from "lucide-react";
@@ -24,6 +24,8 @@ import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
 import AdminFraudTab from "@/components/admin/AdminFraudTab";
 import AdminMaintenanceTab from "@/components/admin/AdminMaintenanceTab";
 
+
+const AdminCatalogTab = lazy(() => import("@/components/admin/AdminCatalogTab"));
 
 const Admin = () => {
   const { user } = useAuth();
@@ -151,6 +153,7 @@ const Admin = () => {
     backup: "Backup & Restore",
     maintenance: "Emergency Maintenance",
     settings: "Platform Settings",
+    catalog: "Category & Service Review",
   };
 
 
@@ -225,6 +228,7 @@ const Admin = () => {
                 {activeTab === "backup" && <AdminBackupTab />}
                 {activeTab === "maintenance" && <AdminMaintenanceTab logAction={logAction} />}
                 {activeTab === "settings" && <AdminSettingsTab />}
+                {activeTab === "catalog" && <Suspense fallback={<p className="text-muted-foreground">Loading category review…</p>}><AdminCatalogTab /></Suspense>}
 
               </motion.div>
             </div>

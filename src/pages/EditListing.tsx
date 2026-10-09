@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
-import { SERVICE_CATEGORIES, STANDALONE_SERVICES, getServiceParent } from "@/lib/services";
+import { useServiceCatalog } from "@/hooks/use-service-catalog";
 
 const EditListing = () => {
   const { id } = useParams();
@@ -39,6 +39,7 @@ const EditListing = () => {
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { categories: SERVICE_CATEGORIES, getParent: getServiceParent } = useServiceCatalog();
   const selectedServiceCategory = SERVICE_CATEGORIES.find((service) => service.slug === serviceCategory);
   const serviceOptions = selectedServiceCategory?.services ?? [];
   const otherServiceOption = serviceOptions.find((service) => service.label === "Other");
@@ -92,7 +93,7 @@ const EditListing = () => {
       setQuantity(String((listing as any).quantity ?? 1));
       setExistingImages(listing.images || []);
     }
-  }, [listing]);
+  }, [listing, SERVICE_CATEGORIES]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

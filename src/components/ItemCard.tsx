@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { MapPin, Clock, IndianRupee, Gift, Wrench, Star, Store, User, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { getServiceCategoryLabel } from "@/lib/services";
+import { useServiceCatalog } from "@/hooks/use-service-catalog";
+import { useSellerMap } from "@/hooks/use-listings";
+import { Button } from "@/components/ui/button";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -40,24 +40,14 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
     fn();
   };
 
-  const { data: sellerProfile } = useQuery({
-    queryKey: ["seller-profile", item.user_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, shop_name, rating, total_reviews")
-        .eq("user_id", item.user_id)
-        .single();
-      return data;
-    },
-    staleTime: 60000,
-  });
+  const { getLabel: getServiceCategoryLabel } = useServiceCatalog();
+  const sellerProfile = useSellerMap().get(item.user_id);
 
   return (
     <Link
       to={outOfStock ? "#" : `/item/${item.id}`}
       onClick={outOfStock ? (e: React.MouseEvent) => e.preventDefault() : undefined}
-      className={`group block rounded-xl border border-border bg-card overflow-hidden transition-all ${outOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg hover:-translate-y-1"}`}
+      className={`group block rounded-lg border border-border bg-card overflow-hidden transition-all ${outOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg hover:-translate-y-1"}`}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {item.images && item.images[0] ? (
@@ -83,13 +73,13 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
         </div>
         {!isOwner && (
           <div className="absolute top-3 right-3 flex flex-col gap-1.5">
-            <button
+            <Button variant="ghost" size="icon"
               onClick={stopAnd(() => toggleWishlist(item.id))}
               aria-label="Toggle wishlist"
               className="h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
             >
               <Heart className={cn("h-4 w-4", wished ? "fill-primary text-primary" : "text-muted-foreground")} />
-            </button>
+            </Button>
           </div>
         )}
       </div>
