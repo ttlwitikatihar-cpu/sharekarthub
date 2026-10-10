@@ -41,7 +41,27 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(160deg,#f7fdfc 0%,#eef9f6 55%,#fdf6ea 100%);z-index:9999;">
+        <style>
+          #boot-splash .sk-logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#109379,#0b6e5c);color:#fff;display:flex;align-items:center;justify-content:center;font:800 32px/1 Inter,system-ui,sans-serif;box-shadow:0 12px 30px -10px rgba(16,147,121,.45);animation:sk-pulse 1.6s ease-in-out infinite}
+          #boot-splash .sk-dots{display:flex;gap:8px}
+          #boot-splash .sk-dots span{width:9px;height:9px;border-radius:50%;background:#109379;opacity:.3;animation:sk-bounce 1.2s ease-in-out infinite}
+          #boot-splash .sk-dots span:nth-child(2){animation-delay:.15s;background:#f59b0a}
+          #boot-splash .sk-dots span:nth-child(3){animation-delay:.3s}
+          #boot-splash .sk-label{font:500 13px/1 Inter,system-ui,sans-serif;color:#4b5b57;letter-spacing:.04em}
+          #boot-splash .sk-warn{display:none;font:500 12px/1.5 Inter,system-ui,sans-serif;color:#8a6d1f;background:#fdf3dd;border:1px solid #f3e2b6;border-radius:999px;padding:6px 14px}
+          #boot-splash.slow .sk-warn{display:block}
+          @keyframes sk-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+          @keyframes sk-bounce{0%,100%{transform:translateY(0);opacity:.3}50%{transform:translateY(-6px);opacity:1}}
+        </style>
+        <div class="sk-logo">S</div>
+        <div class="sk-dots"><span></span><span></span><span></span></div>
+        <div class="sk-label">Loading ShareKart…</div>
+        <div class="sk-warn">Still loading — check your connection or refresh.</div>
+      </div>
+      <script>setTimeout(function(){var s=document.getElementById('boot-splash');if(s)s.classList.add('slow')},6000)</script>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
