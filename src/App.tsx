@@ -28,6 +28,9 @@ import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import NotFound from "./pages/NotFound";
 import MaintenanceGuard from "./components/MaintenanceGuard";
+import LoadingScreen from "@/components/LoadingScreen";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { Suspense } from "react";
 
 
 
@@ -41,6 +44,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <MaintenanceGuard>
+          <ErrorBoundary>
+          <Suspense fallback={<LoadingScreen />}>
           <Routes>
 
             <Route path="/" element={<Index />} />
