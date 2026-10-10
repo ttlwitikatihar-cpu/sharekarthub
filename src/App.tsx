@@ -72,6 +72,8 @@ const App = () => (
             <Route path="/trust/disputes" element={<Disputes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
+          </ErrorBoundary>
           </MaintenanceGuard>
         </AuthProvider>
 
