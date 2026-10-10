@@ -109,7 +109,7 @@ const ItemCard = ({ item, distanceKm }: ItemCardProps) => {
                 <span className="truncate">{sellerProfile.full_name || "Seller"}</span>
               </>
             )}
-            {sellerProfile.rating && Number(sellerProfile.rating) > 0 && (
+            {Number(sellerProfile.rating ?? 0) > 0 && (
               <span className="ml-auto flex items-center gap-0.5 text-accent font-medium">
                 <Star className="h-3 w-3 fill-accent" />
                 {Number(sellerProfile.rating).toFixed(1)}
