@@ -5,6 +5,6 @@
 - [x] Separate product-only and service-only listing fields and preserve compatible order behavior
 - [x] Add Other service choices with custom entry support across categories and subcategories
 - [x] Verify create/edit forms, service discovery, item details, and mobile layout
-- [ ] Organize homepage into distinct product and service views with personal search suggestions
-- [ ] Add secure admin Other-name review, mapping and catalog creation
-- [ ] Cache catalog and verify homepage and authenticated admin flow
+- [x] Organize homepage into distinct product and service views with personal search suggestions
+- [x] Add secure admin Other-name review, mapping and catalog creation
+- [x] Cache catalog and verify homepage and authenticated admin flow
