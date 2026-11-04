@@ -15,6 +15,13 @@
       "when": 1791580535346,
       "tag": "0001_moderated_service_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793782175701,
+      "tag": "0002_add_seller_listing_visibility",
+      "breakpoints": true
     }
   ]
 }

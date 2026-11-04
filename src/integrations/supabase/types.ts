@@ -92,6 +92,7 @@ export type Database = {
           description: string | null
           id: string
           images: string[] | null
+          is_hidden: boolean
           latitude: number | null
           listing_type: string
           location: string | null
@@ -114,6 +115,7 @@ export type Database = {
           description?: string | null
           id?: string
           images?: string[] | null
+          is_hidden?: boolean
           latitude?: number | null
           listing_type?: string
           location?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           description?: string | null
           id?: string
           images?: string[] | null
+          is_hidden?: boolean
           latitude?: number | null
           listing_type?: string
           location?: string | null
