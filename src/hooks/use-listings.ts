@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isListingVisibleInMarketplace } from "@/lib/listing-visibility";
 
 export type SellerInfo = { shop_name: string | null; full_name: string; rating: number | null };
 
@@ -14,7 +15,7 @@ export const useListings = () =>
         .select("*")
         .in("status", ["active", "out_of_stock"]);
       if (error) throw error;
-      return data;
+      return (data ?? []).filter(isListingVisibleInMarketplace);
     },
     retry: 2,
     staleTime: 30000,

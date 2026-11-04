@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Edit, RefreshCw, Package, Eye, Search, X,
+  ArrowLeft, Edit, RefreshCw, Package, Eye, EyeOff, Search, X, Trash2,
   TrendingUp, AlertTriangle, CheckCircle2, Plus, Minus, Save, Loader2,
   LayoutGrid, List as ListIcon, ArrowUpDown, PackageX, PackageCheck,
 } from "lucide-react";
@@ -18,6 +18,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Listing = any;
 type Draft = { price?: number; quantity?: number };
@@ -30,12 +34,13 @@ const MyListings = () => {
   const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"all" | "active" | "low" | "out">("all");
+  const [tab, setTab] = useState<"all" | "active" | "low" | "out" | "hidden">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recent");
   const [view, setView] = useState<"list" | "grid">("list");
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Listing | null>(null);
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["my-listings", user?.id],
@@ -65,11 +70,12 @@ const MyListings = () => {
 
   const stats = useMemo(() => {
     const total = listings.length;
-    const active = listings.filter((l: Listing) => l.status === "active").length;
-    const out = listings.filter((l: Listing) => l.status === "out_of_stock").length;
-    const low = listings.filter((l: Listing) => l.status === "active" && l.quantity > 0 && l.quantity <= LOW_STOCK).length;
+    const active = listings.filter((l: Listing) => !l.is_hidden && l.status === "active").length;
+    const out = listings.filter((l: Listing) => !l.is_hidden && l.status === "out_of_stock").length;
+    const hidden = listings.filter((l: Listing) => l.is_hidden).length;
+    const low = listings.filter((l: Listing) => !l.is_hidden && l.status === "active" && l.quantity > 0 && l.quantity <= LOW_STOCK).length;
     const value = listings.reduce((s: number, l: Listing) => s + (Number(l.price) || 0) * (Number(l.quantity) || 0), 0);
-    return { total, active, out, low, value };
+    return { total, active, out, low, hidden, value };
   }, [listings]);
 
   const filtered = useMemo(() => {
@@ -80,9 +86,10 @@ const MyListings = () => {
       l.description?.toLowerCase().includes(q) ||
       l.category?.toLowerCase().includes(q)
     );
-    if (tab === "active") items = items.filter((l: Listing) => l.status === "active");
-    else if (tab === "out") items = items.filter((l: Listing) => l.status === "out_of_stock");
-    else if (tab === "low") items = items.filter((l: Listing) => l.status === "active" && l.quantity > 0 && l.quantity <= LOW_STOCK);
+    if (tab === "active") items = items.filter((l: Listing) => !l.is_hidden && l.status === "active");
+    else if (tab === "out") items = items.filter((l: Listing) => !l.is_hidden && l.status === "out_of_stock");
+    else if (tab === "low") items = items.filter((l: Listing) => !l.is_hidden && l.status === "active" && l.quantity > 0 && l.quantity <= LOW_STOCK);
+    else if (tab === "hidden") items = items.filter((l: Listing) => l.is_hidden);
     if (categoryFilter !== "all") items = items.filter((l: Listing) => l.category === categoryFilter);
 
     switch (sortBy) {
@@ -170,6 +177,48 @@ const MyListings = () => {
     }
   };
 
+  const toggleVisibility = async (l: Listing) => {
+    setSavingId(l.id);
+    try {
+      const { error } = await supabase.from("listings")
+        .update({ is_hidden: !l.is_hidden, updated_at: new Date().toISOString() })
+        .eq("id", l.id)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      toast({ title: l.is_hidden ? "Listing shown" : "Listing hidden", description: `"${l.title}" ${l.is_hidden ? "is visible in the marketplace again." : "is no longer visible in the marketplace."}` });
+      qc.invalidateQueries({ queryKey: ["my-listings", user?.id] });
+      qc.invalidateQueries({ queryKey: ["listings"] });
+    } catch (e: any) {
+      toast({ title: "Visibility update failed", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const deleteListing = async () => {
+    if (!deleteTarget || !user) return;
+    setSavingId(deleteTarget.id);
+    try {
+      const { error } = await supabase.from("listings")
+        .delete()
+        .eq("id", deleteTarget.id)
+        .eq("user_id", user.id);
+      if (error) {
+        if (error.code === "23503") throw new Error("This listing has order history and cannot be deleted. Hide it to remove it from public view.");
+        throw error;
+      }
+      toast({ title: "Listing deleted", description: `"${deleteTarget.title}" was removed.` });
+      setDeleteTarget(null);
+      qc.invalidateQueries({ queryKey: ["my-listings", user.id] });
+      qc.invalidateQueries({ queryKey: ["listings"] });
+      qc.invalidateQueries({ queryKey: ["admin-listings"] });
+    } catch (e: any) {
+      toast({ title: "Could not delete listing", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -192,6 +241,7 @@ const MyListings = () => {
     const dirty = isDirty(l);
     const isLow = l.status === "active" && l.quantity > 0 && l.quantity <= LOW_STOCK;
     const isOut = l.status === "out_of_stock" || l.quantity === 0;
+    const isHidden = l.is_hidden;
 
     return (
       <motion.div
@@ -200,13 +250,14 @@ const MyListings = () => {
         animate={{ opacity: 1, y: 0 }}
         className={`group relative rounded-xl border bg-card transition-all hover:shadow-md ${
           dirty ? "border-primary ring-1 ring-primary/30" :
+          isHidden ? "border-muted-foreground/30 bg-muted/40" :
           isOut ? "border-destructive/30 bg-destructive/[0.02]" :
           isLow ? "border-amber-500/40" : "border-border"
         }`}
       >
         {/* status stripe */}
         <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-full ${
-          isOut ? "bg-destructive" : isLow ? "bg-amber-500" : "bg-primary"
+          isHidden ? "bg-muted-foreground" : isOut ? "bg-destructive" : isLow ? "bg-amber-500" : "bg-primary"
         }`} />
 
         <div className="p-3 sm:p-4 pl-4 sm:pl-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -231,6 +282,7 @@ const MyListings = () => {
                   {l.title}
                 </Link>
                 {isOut && <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px] h-5">OUT OF STOCK</Badge>}
+                {isHidden && <Badge variant="secondary" className="text-[10px] h-5">HIDDEN</Badge>}
               </div>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 <Badge variant="secondary" className="text-[10px] capitalize h-4 px-1.5">{l.category}</Badge>
@@ -338,6 +390,28 @@ const MyListings = () => {
                 <Eye className="h-4 w-4" />
               </Button>
             </Link>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              title={isHidden ? "Show listing" : "Hide listing"}
+              aria-label={isHidden ? `Show ${l.title}` : `Hide ${l.title}`}
+              onClick={() => toggleVisibility(l)}
+              disabled={savingId === l.id}
+            >
+              {isHidden ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              title="Delete listing"
+              aria-label={`Delete ${l.title}`}
+              onClick={() => setDeleteTarget(l)}
+              disabled={savingId === l.id}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </motion.div>
@@ -372,11 +446,12 @@ const MyListings = () => {
         </div>
 
         {/* Stat pills */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mb-4">
           <StatPill icon={<Package className="h-4 w-4" />} label="Total" value={stats.total} tone="default" onClick={() => setTab("all")} active={tab === "all"} />
           <StatPill icon={<CheckCircle2 className="h-4 w-4" />} label="In stock" value={stats.active} tone="primary" onClick={() => setTab("active")} active={tab === "active"} />
           <StatPill icon={<AlertTriangle className="h-4 w-4" />} label="Low stock" value={stats.low} tone="amber" onClick={() => setTab("low")} active={tab === "low"} />
           <StatPill icon={<PackageX className="h-4 w-4" />} label="Out of stock" value={stats.out} tone="destructive" onClick={() => setTab("out")} active={tab === "out"} />
+          <StatPill icon={<EyeOff className="h-4 w-4" />} label="Hidden" value={stats.hidden} tone="default" onClick={() => setTab("hidden")} active={tab === "hidden"} />
         </div>
 
         {/* Sticky toolbar */}
@@ -470,6 +545,26 @@ const MyListings = () => {
           </div>
         )}
       </main>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && savingId !== deleteTarget?.id) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this listing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{deleteTarget?.title}” will be permanently removed. If it has order history, you can hide it instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={savingId === deleteTarget?.id}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={savingId === deleteTarget?.id}
+              onClick={(event) => { event.preventDefault(); void deleteListing(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {savingId === deleteTarget?.id ? "Deleting…" : "Delete listing"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Footer />
     </div>
   );

@@ -4,3 +4,4 @@
 - Capture Other service names in a deduplicated review queue and apply admin mappings atomically through a role-validated database function to prevent unauthorized catalog edits.
 - Keep search interests account-scoped in browser storage with bounded history and expiry; rank listings locally to avoid extra homepage requests.
 - Use the shared seller directory for item cards rather than one profile request per seller to keep marketplace loading fast.
+- Store seller-controlled listing visibility in `public.listings.is_hidden`; public reads exclude hidden rows while owners and admins retain access, keeping out-of-stock visibility independent from seller hiding.
