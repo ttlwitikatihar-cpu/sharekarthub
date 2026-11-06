@@ -46,7 +46,7 @@ const DeskLamp = ({ on, onToggle }: DeskLampProps) => {
             <stop offset="55%" stopColor="#ffd9a0" />
             <stop offset="100%" stopColor="#ffb85c" stopOpacity="0.2" />
           </radialGradient>
-          <filter id="beamBlur" x="-40%" y="-40%" width="180%" height="180%">
+          <filter id="beamBlur" filterUnits="userSpaceOnUse" x="300" y="100" width="900" height="800">
             <feGaussianBlur stdDeviation="16" />
           </filter>
           <filter id="softBlur" x="-60%" y="-60%" width="220%" height="220%">
@@ -161,7 +161,7 @@ const DeskLamp = ({ on, onToggle }: DeskLampProps) => {
             <stop offset="55%" stopColor="#ffd9a0" />
             <stop offset="100%" stopColor="#ffb85c" stopOpacity="0.2" />
           </radialGradient>
-          <filter id="beamBlurM" x="-40%" y="-40%" width="180%" height="180%">
+          <filter id="beamBlurM" filterUnits="userSpaceOnUse" x="-100" y="0" width="620" height="700">
             <feGaussianBlur stdDeviation="14" />
           </filter>
           <filter id="softBlurM" x="-60%" y="-60%" width="220%" height="220%">
@@ -175,11 +175,11 @@ const DeskLamp = ({ on, onToggle }: DeskLampProps) => {
         </g>
 
         {/* arm coming from top edge */}
-        <path d="M60,-30 L206,66" stroke="url(#lampMetalM)" strokeWidth="14" strokeLinecap="round" />
+        <path d="M60,-30 L206,66" stroke="#2f343d" strokeWidth="14" strokeLinecap="round" />
         <circle cx="206" cy="66" r="13" fill="#2c3038" stroke="#3f4450" strokeWidth="2" />
 
         {/* head pointing down */}
-        <path d="M180,64 L240,64 L262,168 L158,168 Z" fill="url(#lampMetalM)" stroke="#3f4450" strokeWidth="1.5" />
+        <path d="M180,64 L240,64 L262,168 L158,168 Z" fill="#2a2e36" stroke="#4a505c" strokeWidth="1.5" />
         <ellipse cx="210" cy="168" rx="52" ry="7" fill="#101216" />
         <circle
           cx="210"
