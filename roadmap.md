@@ -1,10 +1,4 @@
-- [x] Expand ShareKart services catalog into parent categories and detailed service options
-- [x] Add home-page category cards and service drill-down browsing
-- [x] Add parent/subcategory selection when creating or editing service listings
-- [x] Validate catalog flow and typecheck
-- [x] Separate product-only and service-only listing fields and preserve compatible order behavior
-- [x] Add Other service choices with custom entry support across categories and subcategories
-- [x] Verify create/edit forms, service discovery, item details, and mobile layout
-- [x] Organize homepage into distinct product and service views with personal search suggestions
-- [x] Add secure admin Other-name review, mapping and catalog creation
-- [x] Cache catalog and verify homepage and authenticated admin flow
+- [ ] Add ShareKart Help chat with browser-saved single conversation and live public listing discovery
+- [ ] Add a separate role-checked admin AI tab with confirmed catalog and commission recommendations
+- [ ] Keep arbitrary website code edits outside the in-app assistant and clearly explain the review boundary
+- [ ] Verify AI Elements UI, assistant requests, access checks, and project typecheck/build
